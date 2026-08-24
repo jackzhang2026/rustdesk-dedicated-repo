@@ -166,12 +166,30 @@ jobs:
       - name: Build self-extracted executable
         shell: bash
         run: |
+          # BCS Beam diagnostic (2026-08-24): same log-visibility gap as the
+          # vcpkg step — dump captured output as ::error:: on failure so it
+          # reaches the Checks-API annotations we can read without a token.
+          set +e
           sed -i '/dpiAware/d' res/manifest.xml
           pushd ./libs/portable
-          pip3 install -r requirements.txt
-          python3 ./generate.py -f ../../bcsbeam-remote/ -o . -e ../../bcsbeam-remote/rustdesk.exe
+          pip3 install -r requirements.txt > /tmp/pip.log 2>&1
+          pip_rc=$?
+          if [ $pip_rc -ne 0 ]; then
+            echo "::error::pip3 install failed (exit $pip_rc): $(tail -c 3000 /tmp/pip.log | tr '\n' '|')"
+            exit 1
+          fi
+          python3 ./generate.py -f ../../bcsbeam-remote/ -o . -e ../../bcsbeam-remote/rustdesk.exe > /tmp/generate.log 2>&1
+          gen_rc=$?
+          if [ $gen_rc -ne 0 ]; then
+            echo "::error::generate.py failed (exit $gen_rc): $(tail -c 3000 /tmp/generate.log | tr '\n' '|')"
+            exit 1
+          fi
           popd
           mkdir -p ./SignOutput
+          if [ ! -f ./target/release/rustdesk-portable-packer.exe ]; then
+            echo "::error::rustdesk-portable-packer.exe missing after generate.py; target/release contents: $(ls ./target/release 2>&1 | tr '\n' ' ')"
+            exit 1
+          fi
           mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/BCSBeamRemote-${{ env.VERSION }}-x86_64.exe
 
       - name: Add MSBuild to PATH
