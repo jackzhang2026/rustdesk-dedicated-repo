@@ -201,6 +201,21 @@ jobs:
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
 
+      - name: Rename dist exe to match --app-name (no spaces)
+        shell: bash
+        run: |
+          # BCS Beam fix (2026-08-24): preprocess.py's init_global_vars()
+          # locates the compiled binary as "<dist_dir>/<app_name>.exe" to
+          # query its --version/--build-date, then shells out via
+          # subprocess.Popen(f"{dist_app} {args}", shell=True) with NO
+          # quoting — a space in app_name ("BCS Beam") splits into two argv
+          # tokens ("BCS" as the program, "Beam.exe --version" as its
+          # argument), producing the confusing downstream MSBuild "undefined
+          # preprocessor variable" error this took real log capture to trace
+          # back to. Renaming the actual dist exe to match a space-free
+          # app-name sidesteps this without patching upstream's own script.
+          mv ./bcsbeam-remote/rustdesk.exe ./bcsbeam-remote/BCSBeamRemote.exe
+
       - name: Build msi
         run: |
           pushd ./res/msi
@@ -210,7 +225,10 @@ jobs:
           # Programs listing, install-wizard text) — we just weren't passing
           # them, so the compiled .exe/.msi rebranded correctly but the MSI's
           # own installer UI and ARP entry still said RustDesk/PURSLANE.
-          python preprocess.py --arp -d ../../bcsbeam-remote --app-name "BCS Beam" --manufacturer "Brocent" 2>&1 | Tee-Object -FilePath preprocess.log
+          # --app-name must match the dist exe's actual filename (see the
+          # rename step above) and must not contain spaces (unquoted
+          # subprocess call inside preprocess.py).
+          python preprocess.py --arp -d ../../bcsbeam-remote --app-name "BCSBeamRemote" --manufacturer "Brocent" 2>&1 | Tee-Object -FilePath preprocess.log
           if ($LASTEXITCODE -ne 0) {
             # BCS Beam diagnostic (2026-08-24): PowerShell (the default shell
             # on Windows runners) does NOT fail-fast on a nonzero exit code
