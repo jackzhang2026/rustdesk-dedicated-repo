@@ -29,7 +29,7 @@ config values, not the build process).
 ---
 
 <p align="center">
-  <img src="res/logo-header.svg" alt="RustDesk - Your remote desktop"><br>
+  <img src="res/logo-header.svg" alt="BCS Beam - Brocent Cloud Service remote support"><br>
   <a href="#raw-steps-to-build">Build</a> •
   <a href="#how-to-build-with-docker">Docker</a> •
   <a href="#file-structure">Structure</a> •

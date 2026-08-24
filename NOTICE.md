@@ -29,9 +29,19 @@ substituted with our app name at translation time, **except** the
 from substitution — we did not need to touch this logic to keep the
 attribution visible.
 
-Icon/logo assets (`res/icon.ico`, `res/tray-icon.ico`, `res/icon.png`,
-`res/logo.svg`, `res/logo-header.svg`) are pending replacement with BCS Beam
-artwork — not yet done as of this NOTICE's date.
+- Icon/logo assets replaced with BCS Beam artwork per the approved brand
+  system (v1.3, wordmark-only — no graphic logo; the "B" monogram tile is
+  used solely where the full wordmark can't physically fit):
+  `res/icon.ico`, `res/icon.png`, `res/mac-icon.png`, `res/128x128.png`,
+  `res/128x128@2x.png`, `res/32x32.png`, `res/64x64.png` — the steel-gradient
+  "B" tile (`linear-gradient(180deg, #1a7af0, #0d3766)`, 22% corner radius,
+  weight-800 system-stack font). `res/tray-icon.ico` — the line-frame "B"
+  tile variant (transparent background, 2px outline) for the system tray.
+  `res/logo.svg`/`res/logo-header.svg` — the "BCS Beam" wordmark (BCS in
+  `#69b7ff` tint, BEAM in white, weight 800, 800 tracking) on the brand navy
+  (`#081c33`); these two are only used in this repo's own README, not
+  compiled into the client. `res/mac-tray-dark-x2.png`/`mac-tray-light-x2.png`
+  are unchanged (macOS isn't a build target here yet).
 
 ## Not changed
 
