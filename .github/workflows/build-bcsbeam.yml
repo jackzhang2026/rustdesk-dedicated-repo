@@ -13,8 +13,12 @@ name: Build BCS Beam (Windows x86_64)
 # per upstream's own GitHub issues.
 
 on:
-  push:
-    branches: [main]
+  # Auto-trigger on push REMOVED 2026-08-24: builds moved to local Windows
+  # (Claude Desktop) to stop consuming GitHub Actions quota — Windows runners
+  # bill at 2x minutes and a day of debugging exhausted the plan. This CI
+  # recipe is kept as the authoritative, known-good build reference (and for
+  # an eventual signed release) but only runs when triggered manually from the
+  # Actions tab. Pushes no longer start a build.
   workflow_dispatch:
 
 env:
