@@ -187,7 +187,13 @@ jobs:
           popd
           mkdir -p ./SignOutput
           if [ ! -f ./target/release/rustdesk-portable-packer.exe ]; then
-            echo "::error::rustdesk-portable-packer.exe missing after generate.py; target/release contents: $(ls ./target/release 2>&1 | tr '\n' ' ')"
+            # generate.py exited 0 last time but didn't produce this file — its
+            # own internal cargo build for the packer binary likely failed
+            # silently without generate.py propagating a nonzero exit. Dump
+            # its full log this time regardless of exit code.
+            echo "::error::rustdesk-portable-packer.exe missing after generate.py (which reported success); target/release: $(ls ./target/release 2>&1 | tr '\n' ' ')"
+            echo "::error::generate.py full log: $(cat /tmp/generate.log | tr '\n' '|')"
+            find ./libs/portable -maxdepth 2 -name "Cargo.toml" -exec echo "::error::found packer Cargo.toml: {}" \;
             exit 1
           fi
           mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/BCSBeamRemote-${{ env.VERSION }}-x86_64.exe
