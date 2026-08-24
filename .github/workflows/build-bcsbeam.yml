@@ -117,6 +117,24 @@ jobs:
             exit 1
           }
           & "$env:VCPKG_ROOT\vcpkg" install --triplet x64-windows-static --x-install-root="$env:VCPKG_ROOT\installed"
+          if ($LASTEXITCODE -ne 0) {
+            # BCS Beam diagnostic (2026-08-24): three straight failures at this
+            # step, all "Download failed, halting portfile" with identical
+            # ~3m20s timing — deterministic, not a transient flake. Dumping the
+            # actual vcpkg log as an ::error:: workflow command so it lands in
+            # this run's Checks-API annotations, which are readable without a
+            # repo token (unlike raw step logs) — see
+            # backend/docs/BCS_BEAM_WINDOWS_CLIENT_PLAN_20260824.md in the main
+            # finance repo for why that access gap exists.
+            Get-ChildItem -Path "$env:VCPKG_ROOT" -Filter "*.log" -Recurse -ErrorAction SilentlyContinue |
+              Sort-Object LastWriteTime -Descending | Select-Object -First 3 | ForEach-Object {
+                $content = Get-Content $_.FullName -Raw
+                $tail = if ($content.Length -gt 3500) { $content.Substring($content.Length - 3500) } else { $content }
+                $tail = $tail -replace "`r`n", " | " -replace "`n", " | "
+                Write-Host "::error::VCPKG LOG $($_.Name): $tail"
+              }
+            exit 1
+          }
         shell: pwsh
 
       - name: Build BCS Beam (rustdesk fork)
