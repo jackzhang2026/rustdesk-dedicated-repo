@@ -22,7 +22,16 @@ env:
   LLVM_VERSION: "15.0.6"
   FLUTTER_VERSION: "3.24.5"
   VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
-  VCPKG_COMMIT_ID: "6f29f12e82a8293156836ad81cc9bf5af41fe836"
+  # BCS Beam fix (2026-08-24): the 1.3.9-era commit here (6f29f12e8, "2025.01.13")
+  # pins an exact msys2-runtime package version that every msys2 mirror has
+  # since pruned (confirmed via the actual vcpkg log: 404 on every one of the
+  # 6 known mirrors for msys2-runtime-3.5.4-2-x86_64.pkg.tar.zst, deterministic
+  # 3-for-3 failures at the aom port's pkgconfig fixup step). Upstream's own
+  # CURRENT flutter-build.yml (fetched from their live master branch) has since
+  # moved their main VCPKG_COMMIT_ID forward to this value, keeping the old one
+  # only for their ARMV7 leg (unrelated tooling issue, not this bug) — using
+  # their current pin, not guessing a new one.
+  VCPKG_COMMIT_ID: "120deac3062162151622ca4860575a33844ba10b"
   VERSION: "1.3.9-bcsbeam"
 
 jobs:
