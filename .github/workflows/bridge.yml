@@ -18,9 +18,15 @@ jobs:
       fail-fast: false
       matrix:
         job:
+          # BCS Beam fix (2026-08-24): ubuntu-20.04 is deprecated/removed from
+          # GitHub's hosted runner fleet — a job requesting it never gets a
+          # runner allocated and sits in "queued" forever (confirmed: 8h stuck,
+          # runner_id 0). Moved to ubuntu-22.04; libclang-10/llvm-10 below
+          # bumped to unversioned meta-packages so this doesn't repeat the same
+          # failure mode next time Ubuntu's default toolchain version moves.
           - {
               target: x86_64-unknown-linux-gnu,
-              os: ubuntu-20.04,
+              os: ubuntu-22.04,
               extra-build-args: "",
             }
     steps:
@@ -40,9 +46,9 @@ jobs:
             gcc \
             git \
             g++ \
-            libclang-10-dev \
+            libclang-dev \
             libgtk-3-dev \
-            llvm-10-dev \
+            llvm-dev \
             nasm \
             ninja-build \
             pkg-config \
