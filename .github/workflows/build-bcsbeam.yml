@@ -225,10 +225,12 @@ jobs:
           # Programs listing, install-wizard text) — we just weren't passing
           # them, so the compiled .exe/.msi rebranded correctly but the MSI's
           # own installer UI and ARP entry still said RustDesk/PURSLANE.
-          # --app-name must match the dist exe's actual filename (see the
-          # rename step above) and must not contain spaces (unquoted
-          # subprocess call inside preprocess.py).
-          python preprocess.py --arp -d ../../bcsbeam-remote --app-name "BCSBeamRemote" --manufacturer "Brocent" 2>&1 | Tee-Object -FilePath preprocess.log
+          # --app-name drives the exe filename / registry key (matches the
+          # renamed dist exe above; must be space-free). --product-name is the
+          # user-visible display name (wizard title, ARP entry, EULA) and CAN
+          # have a space — added to preprocess.py so the installer shows
+          # "BCS Beam" while the exe stays BCSBeamRemote.exe. Verified locally.
+          python preprocess.py --arp -d ../../bcsbeam-remote --app-name "BCSBeamRemote" --product-name "BCS Beam" --manufacturer "Brocent" 2>&1 | Tee-Object -FilePath preprocess.log
           if ($LASTEXITCODE -ne 0) {
             # BCS Beam diagnostic (2026-08-24): PowerShell (the default shell
             # on Windows runners) does NOT fail-fast on a nonzero exit code

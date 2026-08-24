@@ -73,7 +73,17 @@ def make_parser():
         help='Connection type, e.g. "incoming", "outgoing". Default is empty, means incoming-outgoing',
     )
     parser.add_argument(
-        "--app-name", type=str, default="RustDesk", help="The app name."
+        "--app-name", type=str, default="RustDesk", help="The app name (drives the exe filename / registry key; keep it space-free)."
+    )
+    # BCS Beam addition (2026-08-24): the upstream script overloads --app-name
+    # as BOTH the exe basename (dist/<app_name>.exe, shelled out UNQUOTED, so a
+    # space breaks it) AND every user-visible display string (wizard title,
+    # ARP entry, EULA). To show a proper spaced brand ("BCS Beam") while
+    # keeping a space-free exe filename, --product-name decouples the display
+    # name. When omitted it defaults to --app-name, so upstream behavior is
+    # unchanged for anyone not passing it.
+    parser.add_argument(
+        "--product-name", type=str, default="", help="User-visible product/display name (may contain spaces). Defaults to --app-name."
     )
     parser.add_argument(
         "-v", "--version", type=str, default="", help="The app version."
@@ -158,8 +168,8 @@ def gen_pre_vars(args, dist_dir):
         to_insert_lines = [
             f'{indent}<?define Version="{g_version}" ?>\n',
             f'{indent}<?define Manufacturer="{args.manufacturer}" ?>\n',
-            f'{indent}<?define Product="{args.app_name}" ?>\n',
-            f'{indent}<?define Description="{args.app_name} Installer" ?>\n',
+            f'{indent}<?define Product="{args.product_name}" ?>\n',
+            f'{indent}<?define Description="{args.product_name} Installer" ?>\n',
             f'{indent}<?define ProductLower="{args.app_name.lower()}" ?>\n',
             f'{indent}<?define RegKeyRoot=".$(var.ProductLower)" ?>\n',
             f'{indent}<?define RegKeyInstall="$(var.RegKeyRoot)\\Install" ?>\n',
@@ -311,7 +321,7 @@ def gen_custom_ARPSYSTEMCOMPONENT_True(args, dist_dir):
             f"{indent}<!--https://learn.microsoft.com/en-us/windows/win32/msi/property-reference-->\n"
         )
         lines_new.append(
-            f'{indent}<RegistryValue Type="string" Name="DisplayName" Value="{args.app_name}" />\n'
+            f'{indent}<RegistryValue Type="string" Name="DisplayName" Value="{args.product_name}" />\n'
         )
         lines_new.append(
             f'{indent}<RegistryValue Type="string" Name="DisplayIcon" Value="[INSTALLFOLDER_INNER]{args.app_name}.exe" />\n'
@@ -523,6 +533,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     app_name = args.app_name
+    # BCS Beam: display name defaults to app-name (upstream behavior) unless
+    # --product-name is given. Stored back onto args so the existing helpers
+    # that read args.product_name see the resolved value.
+    if not args.product_name:
+        args.product_name = args.app_name
     dist_dir = Path(sys.argv[0]).parent.joinpath(args.dist_dir).resolve()
 
     if not prepare_resources():
@@ -531,7 +546,7 @@ if __name__ == "__main__":
     if not init_global_vars(dist_dir, app_name, args):
         sys.exit(-1)
 
-    update_license_file(app_name)
+    update_license_file(args.product_name)
 
     if not gen_pre_vars(args, dist_dir):
         sys.exit(-1)
@@ -554,5 +569,5 @@ if __name__ == "__main__":
     if not gen_custom_dialog_bitmaps():
         sys.exit(-1)
 
-    replace_app_name_in_langs(args.app_name)
+    replace_app_name_in_langs(args.product_name)
     replace_app_name_in_custom_actions(args.app_name)

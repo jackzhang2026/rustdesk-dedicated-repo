@@ -19,7 +19,33 @@ per AGPL-3.0's source-availability requirement).
     (`beam-relay.centoffer.com`).
   - `RS_PUB_KEY` changed to our own self-hosted server's public key.
 
-That's it — no other source files are modified. The `APP_NAME` change alone
+- Branding strings that do NOT go through the `translate()` substitution path
+  (and therefore don't auto-rebrand at runtime) were changed by hand:
+  - `flutter/lib/desktop/widgets/tabbar_widget.dart`: the custom in-app
+    title-bar `Text("RustDesk")` → `"BCS Beam"`.
+  - `flutter/windows/runner/main.cpp`: the native window-title fallback.
+  - `flutter/windows/runner/Runner.rc`: Windows file-properties metadata
+    (CompanyName → Brocent, ProductName → BCS Beam, etc.; `LegalCopyright`
+    keeps the RustDesk/Purslane AGPL attribution).
+
+- Installer packaging (`res/msi/`):
+  - `preprocess.py`: added a `--product-name` argument (defaults to
+    `--app-name`, so upstream behavior is unchanged when omitted) that
+    decouples the user-visible display name from the exe filename. Needed
+    because upstream overloads `--app-name` as both the exe basename — which
+    it shells out to UNQUOTED, so a space breaks it — and every display
+    string. We pass `--app-name BCSBeamRemote` (space-free filename) +
+    `--product-name "BCS Beam"` (spaced display).
+  - `res/msi/Package/Resources/WixUIDialogBmp.bmp` + `WixUIBannerBmp.bmp`:
+    BCS Beam wizard artwork (this dir is `.gitignore`d upstream, so these are
+    force-added). Without them the installer wizard falls back to the stock
+    art.
+
+- Icon/logo assets under `res/` and
+  `flutter/windows/runner/resources/app_icon.ico` replaced with BCS Beam
+  artwork per the approved v1.3 brand system (see below).
+
+The `APP_NAME` change alone
 propagates the rebrand through the UI via RustDesk's own existing
 `is_rustdesk()`/`get_app_name()` mechanism (`src/common.rs`, `src/lang.rs`):
 every UI string containing the literal word "RustDesk" is automatically
