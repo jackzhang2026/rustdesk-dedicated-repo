@@ -210,7 +210,17 @@ jobs:
           # Programs listing, install-wizard text) — we just weren't passing
           # them, so the compiled .exe/.msi rebranded correctly but the MSI's
           # own installer UI and ARP entry still said RustDesk/PURSLANE.
-          python preprocess.py --arp -d ../../bcsbeam-remote --app-name "BCS Beam" --manufacturer "Brocent"
+          python preprocess.py --arp -d ../../bcsbeam-remote --app-name "BCS Beam" --manufacturer "Brocent" 2>&1 | Tee-Object -FilePath preprocess.log
+          if ($LASTEXITCODE -ne 0) {
+            # BCS Beam diagnostic (2026-08-24): PowerShell (the default shell
+            # on Windows runners) does NOT fail-fast on a nonzero exit code
+            # the way bash -e does — a silent preprocess.py failure here would
+            # otherwise fall through into nuget/msbuild and surface only as a
+            # confusing downstream "undefined preprocessor variable" error.
+            $tail = Get-Content preprocess.log -Raw
+            Write-Host "::error::preprocess.py failed (exit $LASTEXITCODE): $tail"
+            exit 1
+          }
           nuget restore msi.sln
           msbuild msi.sln -p:Configuration=Release -p:Platform=x64 /p:TargetVersion=Windows10
           mv ./Package/bin/x64/Release/en-us/Package.msi ../../SignOutput/BCSBeamRemote-${{ env.VERSION }}-x86_64.msi
