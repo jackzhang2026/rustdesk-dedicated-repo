@@ -108,7 +108,11 @@ jobs:
         env:
           VCPKG_DEFAULT_HOST_TRIPLET: x64-windows-static
         run: |
-          if (-not ($VCPKG_ROOT -and (Test-Path $VCPKG_ROOT))) {
+          # BCS Beam fix (2026-08-24): this previously checked $VCPKG_ROOT (an
+          # undefined plain PowerShell variable, always $null) instead of
+          # $env:VCPKG_ROOT — the guard always tripped and failed instantly
+          # (0s) regardless of whether run-vcpkg had set it up correctly.
+          if (-not ($env:VCPKG_ROOT -and (Test-Path $env:VCPKG_ROOT))) {
             Write-Error "VCPKG_ROOT not set by run-vcpkg action"
             exit 1
           }
