@@ -62,7 +62,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   std::vector<std::string> rust_args(c_args, c_args + args_len);
   free_c_args(c_args, args_len);
 
-  std::wstring app_name = L"RustDesk";
+  // BCS Beam rebrand: this is only the fallback used if the dynamic lookup
+  // below (get_rustdesk_app_name, reading hbb_common::config::APP_NAME) ever
+  // fails — kept in sync for consistency, not the actual mechanism.
+  std::wstring app_name = L"BCS Beam";
   FUNC_RUSTDESK_GET_APP_NAME get_rustdesk_app_name = (FUNC_RUSTDESK_GET_APP_NAME)GetProcAddress(hInstance, "get_rustdesk_app_name");
   if (get_rustdesk_app_name) {
     wchar_t app_name_buffer[512] = {0};

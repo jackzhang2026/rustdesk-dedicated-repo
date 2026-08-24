@@ -204,7 +204,13 @@ jobs:
       - name: Build msi
         run: |
           pushd ./res/msi
-          python preprocess.py --arp -d ../../bcsbeam-remote
+          # BCS Beam fix (2026-08-24): preprocess.py already supports
+          # --app-name/--manufacturer (defaults "RustDesk"/"PURSLANE") to
+          # template-substitute the WiX package's own strings (Add/Remove
+          # Programs listing, install-wizard text) — we just weren't passing
+          # them, so the compiled .exe/.msi rebranded correctly but the MSI's
+          # own installer UI and ARP entry still said RustDesk/PURSLANE.
+          python preprocess.py --arp -d ../../bcsbeam-remote --app-name "BCS Beam" --manufacturer "Brocent"
           nuget restore msi.sln
           msbuild msi.sln -p:Configuration=Release -p:Platform=x64 /p:TargetVersion=Windows10
           mv ./Package/bin/x64/Release/en-us/Package.msi ../../SignOutput/BCSBeamRemote-${{ env.VERSION }}-x86_64.msi
