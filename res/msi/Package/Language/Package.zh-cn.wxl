@@ -1,0 +1,60 @@
+<!--
+Simplified-Chinese localization of the custom installer strings.
+BCS Beam addition (2026-08-24). "RustDesk" is kept as a literal token here on
+purpose: res/msi/preprocess.py's replace_app_name_in_langs() rewrites it to
+the product display name ("BCS Beam") across every wxl at build time, exactly
+as it does for the en-us file — so "启动 RustDesk。" becomes "启动 BCS Beam。".
+-->
+<WixLocalization Culture="zh-cn" Codepage="936"
+	xmlns="http://wixtoolset.org/schemas/v4/wxl">
+
+	<String Id="SummaryCodepage" Value="936" />
+	<String Id="ProductLanguage" Value="2052" />
+
+	<!-- General strings -->
+	<String Id="DowngradeError" Value="已安装更新版本的 [ProductName]。" />
+
+	<String Id="AR_Comment" Value="RustDesk" />
+
+	<String Id="F_App" Value="RustDesk" />
+	<String Id="F_App_Desc" Value="RustDesk - 主程序。" />
+
+	<String Id="SC_Uninstall" Value="卸载 RustDesk" />
+	<String Id="SC_Uninstall_Desc" Value="从计算机中移除 RustDesk 或其组件" />
+
+	<!-- Client related strings -->
+	<String Id="F_Client" Value="客户端" />
+	<String Id="F_Client_Desc" Value="用户界面。" />
+	<String Id="F_Client_Plugins" Value="插件" />
+	<String Id="F_Client_Plugins_Desc" Value="客户端插件。" />
+	<String Id="F_LAVFilters" Value="LAV 滤镜" />
+	<String Id="F_LAVFilters_Desc" Value="推荐的 DirectShow 滤镜，可获得最佳音视频播放体验。" />
+
+	<String Id="SC_Client" Value="RustDesk" />
+	<String Id="SC_Client_Desc" Value="启动 RustDesk。" />
+
+	<String Id="SC_Client_Tray" Value="RustDesk 托盘" />
+	<String Id="SC_Client_Tray_Desc" Value="启动 RustDesk 托盘。" />
+
+	<!-- Server related strings -->
+	<String Id="F_Server" Value="服务端" />
+	<String Id="F_Server_Desc" Value="RustDesk 的服务端部分。" />
+	<String Id="F_Server_Plugins" Value="插件" />
+	<String Id="F_Server_Plugins_Desc" Value="服务端插件。" />
+
+	<String Id="Service_DisplayName" Value="RustDesk 服务" />
+	<String Id="Service_Description" Value="此服务用于运行 RustDesk 服务端。" />
+
+	<!-- Launch Conditions -->
+	<String Id="LC_OS" Value="[ProductName] 要求操作系统至少为 Windows 7 / 2008 R2。" />
+	<String Id="LC_ADMIN" Value="您需要以管理员身份才能安装 [ProductName]。" />
+
+	<!-- User Interfaces -->
+	<String Id="AnotherAppDialogTitle" Value="取消安装。"/>
+	<String Id="AnotherAppDialogDescription" Value="该应用已通过自安装方式安装，请先卸载后再继续。"/>
+
+	<String Id="MyInstallDirDlgDesktopShortcuts" Value="创建桌面图标" />
+	<String Id="MyInstallDirDlgStartMenuShortcuts" Value="创建开始菜单快捷方式" />
+	<String Id="MyInstallDirDlgPrinter" Value="安装 RustDesk 打印机" />
+
+</WixLocalization>

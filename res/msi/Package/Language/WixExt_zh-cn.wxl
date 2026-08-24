@@ -1,0 +1,22 @@
+<!--
+Simplified-Chinese localization of the WiX Firewall/Util extension messages
+used by this package. BCS Beam addition (2026-08-24). Mirrors WixExt_en-us.wxl.
+-->
+<WixLocalization Culture="zh-cn"
+	xmlns="http://wixtoolset.org/schemas/v4/wxl">
+
+	<!-- Firewall Extension -->
+	<String Id="msierrFirewallCannotConnect" Overridable="yes" Value="无法连接到 Windows 防火墙。([2]   [3]   [4]   [5])" />
+
+	<String Id="WixSchedFirewallExceptionsInstall" Overridable="yes" Value="正在配置 Windows 防火墙" />
+	<String Id="WixSchedFirewallExceptionsUninstall" Overridable="yes" Value="正在配置 Windows 防火墙" />
+	<String Id="WixRollbackFirewallExceptionsInstall" Overridable="yes" Value="正在回滚 Windows 防火墙配置" />
+	<String Id="WixExecFirewallExceptionsInstall" Overridable="yes" Value="正在安装 Windows 防火墙配置" />
+	<String Id="WixRollbackFirewallExceptionsUninstall" Overridable="yes" Value="正在回滚 Windows 防火墙配置" />
+	<String Id="WixExecFirewallExceptionsUninstall" Overridable="yes" Value="正在卸载 Windows 防火墙配置" />
+
+	<!-- Util Extension -->
+	<String Id="msierrSecureObjectsFailedCreateSD" Overridable="yes" Value="无法创建安全描述符 [3]\[4]，错误：[2]" />
+	<String Id="msierrSecureObjectsFailedSet" Overridable="yes" Value="无法应用对象安全描述符 [3]，错误：[2]" />
+	<String Id="msierrSecureObjectsUnknownType" Overridable="yes" Value="未知对象类型 [3]，错误：[2]" />
+</WixLocalization>
