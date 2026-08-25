@@ -4,7 +4,52 @@
 **Date: 2026-08-25. Self-contained — do not assume access to any other machine or
 this conversation's context.**
 
-## 0. TL;DR
+## STATUS UPDATE (2026-08-25, later same day) — RESOLVED, §0-§2's proposed fix was NOT NEEDED
+
+**Verified directly on Jack's Windows build machine, by the Claude Code session doing the
+actual local BCS Beam builds that day (not this document's original author).** This
+handoff's central premise — "no `<Cultures>` line exists, so only one culture ever gets
+built, you must add `<Cultures>en-US;zh-CN</Cultures>`" — turned out to be **wrong for this
+codebase**, even though it was a reasonable inference from reading the `.wixproj` alone.
+
+**What was actually checked**: that machine's `res/msi/Package/Package.wixproj` has the
+exact same content described below (`Configurations`/`Platforms` in the first
+`PropertyGroup`, no `<Cultures>` anywhere) — confirmed by reading the file directly, not
+assumed. Repo state there was `ac6b963` (a few commits behind this handoff's `aa4fd69`,
+diverged after that point — not expected to matter for WiX behavior, but noting it since
+it's not literally the same checkout). **Four separate full rebuilds that day (none of
+them had this `<Cultures>` line added) each produced BOTH `bin\x64\Release\en-us\
+Package.msi` AND `bin\x64\Release\zh-cn\Package.msi` from one `msbuild msi.sln` run,
+unprompted.** Inspected the `zh-cn` one directly via the Windows Installer COM API:
+`ProductLanguage` = `2052` (correct LCID for zh-CN), and sampled several `Control` table
+strings — button labels ("是(&Y)", "取消", "重试(&R)" etc.) all rendered as correct,
+un-garbled Chinese, no mojibake.
+
+**Conclusion**: WiX v4's SDK-style project (`Sdk="WixToolset.Sdk/4.0.5"`) appears to
+auto-discover and build a culture for every `.wxl` file present in `Language/` that
+matches the naming convention, *without* needing an explicit `<Cultures>` declaration —
+this repo already ships both `Package.en-us.wxl`/`Package.zh-cn.wxl` and
+`WixExt_en-us.wxl`/`WixExt_zh-cn.wxl`, which is apparently sufficient on its own. §2's
+proposed one-line change was therefore not applied, and should NOT be added speculatively
+— if anyone does add it later for some other reason, watch for whether it changes this
+auto-discovery behavior (untested).
+
+**What's still NOT independently confirmed** (lower-stakes than what this doc originally
+worried about, but honest gap): nobody has done a full interactive click-through of the
+zh-cn MSI's install wizard end-to-end with eyes on screen — the check above was at the MSI
+database level (COM API property/string queries), not a rendered GUI. Given the language ID
+and every sampled string came back correct and clean, this residual risk is judged low
+enough that Jack closed out issue #15 in `backend/docs/BCS_BEAM_OPEN_ISSUES_REGISTER.md` on
+this basis rather than waiting for a GUI screenshot pass — flag here in case that judgment
+call needs revisiting.
+
+**§4's validation checklist below is still good practice** if anyone does end up installing
+either MSI by hand for other reasons (e.g. real hands-on functional testing) — just treat
+it as "nice to also confirm while you're there," not as blocking work still owed.
+
+---
+
+## 0. TL;DR (ORIGINAL — see STATUS UPDATE above, this section's premise did not hold)
 
 **Yes, this needs a real recompile.** WiX bakes a culture (language) into an MSI at
 build time — it is not something a customer's machine picks at install time by
