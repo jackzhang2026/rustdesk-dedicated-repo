@@ -69,10 +69,31 @@ attribution visible.
   compiled into the client. `res/mac-tray-dark-x2.png`/`mac-tray-light-x2.png`
   are unchanged (macOS isn't a build target here yet).
 
+- Self-update check (P0 #1, BCS_BEAM_OPEN_ISSUES_REGISTER.md, 2026-08-25):
+  - `libs/hbb_common/src/lib.rs`: `version_check_request`'s hard-coded URL
+    changed from `https://api.rustdesk.com/version/latest` to our own
+    `https://update.centoffer.com/version/latest`. **Server not yet live** —
+    see the plan doc for the manifest contract and open hosting/signing
+    decisions; an unreachable endpoint fails silently (same as today).
+  - `src/common.rs`: `check_software_update()` no longer early-returns for
+    "custom client" builds (upstream skips update checks entirely for any
+    non-stock rebrand) — we self-host, so we do want the check to run.
+    `is_custom_client()` itself is untouched; it still drives ~7 unrelated
+    default-UX branches.
+  - `flutter/lib/common.dart`: `checkUpdate()`'s matching
+    `!bind.isCustomClient()` gate removed for the same reason.
+  - **Deliberately NOT changed**: `flutter/lib/desktop/pages/
+    desktop_home_page.dart`'s "new version available" card stays gated off
+    (still checks `isCustomClient`/`mainUriPrefixSync().contains('rustdesk')`)
+    — its tap handler opens `https://rustdesk.com/download`, and BCS Beam has
+    no equivalent customer-facing download page yet. Wiring a card that opens
+    a real download page is a follow-up once one exists, not done here to
+    avoid shipping a dead link.
+
 ## Not changed
 
 Remote-control protocol, encryption/security model, permission/consent
-handling, or any other functional behavior. This fork exists solely to point
-the client at our own server and to reflect our own brand name in the UI —
-it is not a security-relevant fork and should be kept in sync with upstream
-RustDesk releases for security fixes.
+handling, or any other functional behavior beyond the self-update check noted
+above. This fork exists solely to point the client at our own server and to
+reflect our own brand name in the UI — it is not a security-relevant fork and
+should be kept in sync with upstream RustDesk releases for security fixes.

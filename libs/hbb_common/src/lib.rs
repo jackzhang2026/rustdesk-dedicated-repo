@@ -423,7 +423,19 @@ pub const VER_TYPE_RUSTDESK_CLIENT: &str = "rustdesk-client";
 pub const VER_TYPE_RUSTDESK_SERVER: &str = "rustdesk-server";
 
 pub fn version_check_request(typ: String) -> (VersionCheckRequest, String) {
-    const URL: &str = "https://api.rustdesk.com/version/latest";
+    // BCS Beam fork (P0 #1, BCS_BEAM_OPEN_ISSUES_REGISTER.md, 2026-08-25):
+    // upstream points this at api.rustdesk.com — self-hosted so update
+    // delivery/cadence is under Brocent's control, independent of upstream's
+    // release schedule. NOT YET LIVE: no server answers this endpoint yet —
+    // see backend/docs/BCS_BEAM_WINDOWS_CLIENT_PLAN_20260824.md P0 #1 for the
+    // manifest contract this needs to serve ({"url": ".../BCSBeamRemote-
+    // <version>-x86_64.exe"}, version parsed from the URL's last path
+    // segment) and the still-open hosting/signing decisions. Safe to ship
+    // pointed here regardless of server readiness: check_software_update_()
+    // propagates connection failures via `?` and the caller (allow_err!)
+    // swallows them — an unreachable/not-yet-built endpoint just means the
+    // update check silently no-ops, same as it does today.
+    const URL: &str = "https://update.centoffer.com/version/latest";
 
     use sysinfo::System;
     let system = System::new();
