@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="120" viewBox="0 0 640 120">
+  <rect width="640" height="120" rx="10" fill="#081c33"/>
+  <text x="40" y="76" font-family="Liberation Sans, -apple-system, 'Segoe UI', Arial, sans-serif"
+        font-weight="800" font-size="52" letter-spacing="2.3">
+    <tspan fill="#69b7ff">BCS</tspan><tspan fill="#ffffff"> BEAM</tspan>
+  </text>
+  <rect x="41" y="90" width="64" height="3" fill="#1890ff"/>
+  <text x="41" y="108" font-family="Liberation Sans, -apple-system, 'Segoe UI', Arial, sans-serif"
+        font-size="11" letter-spacing="3" fill="rgba(255,255,255,0.52)">BROCENT CLOUD SERVICE</text>
+</svg>
