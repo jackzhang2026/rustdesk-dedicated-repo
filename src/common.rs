@@ -830,9 +830,15 @@ pub fn is_modifier(evt: &KeyEvent) -> bool {
 }
 
 pub fn check_software_update() {
-    if is_custom_client() {
-        return;
-    } 
+    // BCS Beam fork (P0 #1, 2026-08-25): upstream skips this entirely for any
+    // "custom client" (get_app_name() != "RustDesk") — third-party rebrands
+    // generally have no update server of their own to check against. We DO
+    // (see hbb_common::version_check_request's URL, now self-hosted), so
+    // don't early-return here. NOTE: is_custom_client() itself is left
+    // completely untouched — it also drives ~7 unrelated default-UX
+    // branches (default lang/theme/access-mode/etc, see flutter/lib/
+    // common.dart) that should still behave as "custom client" for BCS Beam;
+    // only THIS gate needed to change.
     let opt = config::LocalConfig::get_option(config::keys::OPTION_ENABLE_CHECK_UPDATE);
     if config::option2bool(config::keys::OPTION_ENABLE_CHECK_UPDATE, &opt) {
         std::thread::spawn(move || allow_err!(check_software_update_()));

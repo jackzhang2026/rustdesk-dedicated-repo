@@ -206,6 +206,27 @@ Strategy (decided with Jack): layered.
 - 2026-08-24: installer language = **auto-switch by OS language** (Jack's choice); safe delivery = Inno wrapper
   layer + bilingual-buildable MSI (§3).
 - 2026-08-24: UAC nag is handled by the MSI/`--silent-install` full install; portable exe showing it is expected.
+- 2026-08-25: **Open-source posture (Jack)** — it is FINE to publicly state BCS Beam is built on the OpenIM +
+  RustDesk engines; no effort will be spent hiding the tech stack or renaming APIs to obscure it. Customer-facing
+  UI stays 100% BCS Beam; the AGPL source/attribution obligations for RustDesk/OpenIM are simply honored (this is
+  why "Powered by RustDesk" is kept). Verified 2026-08-25 the public fork is clean: no secrets/private keys/.env
+  committed; the only baked-in values are the public rendezvous domain + the **public** RS_PUB_KEY (private key
+  lives only on the server, not here) + APP_NAME.
+- 2026-08-25: **Security boundary (Jack)** — "keep the open-source part clean, focus security in the backend."
+  Public client source may contain: public keys, public domains, the narrow customer-scoped API paths, branding,
+  license notices. It must NEVER contain: secrets/credentials/tokens, private keys, DB/infra strings, or
+  internal/admin/staff API endpoints; real config is injected at deploy (placeholders in-repo). ALL security
+  authority (authz, per-customer isolation, the authority to grant remote control) lives in the proprietary
+  backend — the client only *requests*, the backend *decides & enforces*. Every client-visible endpoint is
+  hardened as if fully public.
+- 2026-08-25: **MeshCentral is Apache-2.0** (permissive) → can be fully rebranded AND fully hidden with no legal
+  obligation; **RustDesk + OpenIM SDK are copyleft** → customer-facing full rebrand is fine but source stays
+  available + attributed (can't be legally hidden from source-readers; customers never see it).
+- 2026-08-25 (product direction, not build-blocking): endgame is a single unified BCS Beam desktop client
+  (extend OpenIM's native client) hosting chat + tickets + My-Device/Transparency/Self-service (fed by Fleet DATA
+  via backend; fleetd stays the official signed binary, headless) + remote-support (bridging Mesh/RustDesk,
+  tool names not shown to the user). **Single-tray principle**: exactly ONE BCS Beam tray icon (the client);
+  Mesh/RustDesk/Fleet all run headless with no tray of their own. Fleet is deployed per customer/contract.
 
 ## 10. What to hand back to Jack when done
 

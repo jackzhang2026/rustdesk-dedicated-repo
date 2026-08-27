@@ -16,7 +16,6 @@ use hbb_common::{
     futures::future::join_all,
     log,
     protobuf::Message as _,
-    proxy::Proxy,
     rendezvous_proto::*,
     sleep,
     socket_client::{self, connect_tcp, is_ipv4},
@@ -29,7 +28,6 @@ use hbb_common::{
 use crate::{
     check_port,
     server::{check_zombie, new as new_server, ServerPtr},
-    ui_interface::get_builtin_option,
 };
 
 type Message = RendezvousMessage;
@@ -383,21 +381,14 @@ impl RendezvousMediator {
 
     pub async fn start(server: ServerPtr, host: String) -> ResultType<()> {
         log::info!("start rendezvous mediator of {}", host);
-        //If the investment agent type is http or https, then tcp forwarding is enabled.
-        let is_http_proxy = if let Some(conf) = Config::get_socks() {
-            let proxy = Proxy::from_conf(&conf, None)?;
-            proxy.is_http_or_https()
-        } else {
-            false
-        };
-        if (cfg!(debug_assertions) && option_env!("TEST_TCP").is_some())
-            || is_http_proxy
-            || get_builtin_option(config::keys::OPTION_DISABLE_UDP) == "Y"
-        {
-            Self::start_tcp(server, host).await
-        } else {
-            Self::start_udp(server, host).await
-        }
+        // BCS Beam: always use TCP rendezvous, unconditionally. Our mainland-China relay
+        // hop (CN box -> HK via TCP-encapsulated IPsec, see BCS_BEAM_OPEN_ISSUES_REGISTER.md
+        // #13) forwards TCP only — UDP 21116 has no path through it. And since the hbbs/hbbr
+        // fleet runs `-k _` (always-relay), direct P2P via UDP hole-punching was never usable
+        // in this deployment anyway, so there is no upside to attempting UDP first. This
+        // removes the need for end users to hand-edit `disable-udp = "Y"` into their local
+        // config file — it was never exposed in the Settings UI and was error-prone to set.
+        Self::start_tcp(server, host).await
     }
 
     async fn handle_request_relay(&self, rr: RequestRelay, server: ServerPtr) -> ResultType<()> {

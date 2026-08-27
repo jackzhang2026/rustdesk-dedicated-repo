@@ -73,3 +73,9 @@ vcpkg_installed
 flutter/lib/generated_plugin_registrant.dart
 libsciter.dylib
 flutter/web/
+/dist
+# BCS Beam (2026-08-26): the blanket *png/*svg rules above silently swallow
+# legitimate committed assets (HANDOFF_LOCAL_BUILD.md landmine #1 -- this has
+# now bitten three separate times). The branding/ kit must be fully tracked.
+!branding/**/*.png
+!branding/**/*.svg

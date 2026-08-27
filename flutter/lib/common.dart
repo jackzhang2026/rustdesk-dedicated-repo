@@ -3700,7 +3700,12 @@ void earlyAssert() {
 
 void checkUpdate() {
   if (!isWeb) {
-    if (!bind.isCustomClient()) {
+    // BCS Beam fork (P0 #1, 2026-08-25): upstream skips this for any custom
+    // client (see the matching Rust-side note in src/common.rs's
+    // check_software_update()) — we now self-host the update-check endpoint,
+    // so this fork DOES want the handler registered. isCustomClient itself
+    // is untouched; only this one gate changed.
+    {
       platformFFI.registerEventHandler(
           kCheckSoftwareUpdateFinish, kCheckSoftwareUpdateFinish,
           (Map<String, dynamic> evt) async {
