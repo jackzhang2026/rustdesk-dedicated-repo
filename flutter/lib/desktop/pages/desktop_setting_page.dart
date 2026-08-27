@@ -2104,7 +2104,7 @@ class _AboutState extends State<_About> {
                         .marginSymmetric(vertical: 4.0)),
               InkWell(
                   onTap: () {
-                    launchUrlString('https://rustdesk.com/privacy.html');
+                    launchUrlString('https://www.brocent.com/infopages/privacy');
                   },
                   child: Text(
                     translate('Privacy Statement'),
@@ -2112,7 +2112,7 @@ class _AboutState extends State<_About> {
                   ).marginSymmetric(vertical: 4.0)),
               InkWell(
                   onTap: () {
-                    launchUrlString('https://rustdesk.com');
+                    launchUrlString('https://www.brocent.com');
                   },
                   child: Text(
                     translate('Website'),
@@ -2217,6 +2217,33 @@ class _LicenseStatementState extends State<_LicenseStatement> {
                 'license.',
               ).marginSymmetric(vertical: 4.0),
             ),
+            // BCS Beam (2026-08-27): the canonical Brocent legal pages, per
+            // Jack. Separate labelled links rather than one bare URL so each
+            // is individually recognisable.
+            InkWell(
+                onTap: () {
+                  launchUrlString('https://www.brocent.com/infopages/license');
+                },
+                child: Text(
+                  'License',
+                  style: linkStyle,
+                ).marginSymmetric(vertical: 4.0)),
+            InkWell(
+                onTap: () {
+                  launchUrlString('https://www.brocent.com/infopages/terms');
+                },
+                child: Text(
+                  'Terms of Service',
+                  style: linkStyle,
+                ).marginSymmetric(vertical: 4.0)),
+            InkWell(
+                onTap: () {
+                  launchUrlString('https://www.brocent.com/infopages/privacy');
+                },
+                child: Text(
+                  'Privacy Statement',
+                  style: linkStyle,
+                ).marginSymmetric(vertical: 4.0)),
             InkWell(
                 onTap: () {
                   launchUrlString('https://www.brocent.com');
