@@ -106,12 +106,31 @@ attribution visible.
     it) are left in the tree, just never called — reverting is a one-line
     change if a future non-relay-forced deployment ever wants UDP back.
 
+- Rendezvous handshake timeout no longer fatal (TASK-061 #13,
+  BCS_BEAM_OPEN_ISSUES_REGISTER.md, 2026-08-27, following the TCP-only change
+  above once it reached real testing):
+  - `src/common.rs`: `secure_tcp()` — a bare timeout waiting for the server's
+    optional KeyExchange message is now handled the same as "server sent some
+    other message" (a graceful no-op), instead of propagating as a fatal
+    error via `?` that killed the whole TCP rendezvous connection and forced
+    an infinite reconnect loop. Our self-hosted hbbs (stock
+    `rustdesk/rustdesk-server` image, `-k _`) never proactively sends this
+    message — verified empirically with a raw socket probe (connect + wait,
+    zero bytes from the server) — it is a purely passive/reactive server that
+    waits for the client to speak first. This is the reason the TCP-only
+    build above never reached "Ready" in its first real test: every
+    connection attempt hung in this handshake until timeout, then reconnected,
+    forever. Only the optional extra encryption layer on the
+    ID-registration/heartbeat channel is affected — the actual remote-control
+    session's own end-to-end encryption is negotiated separately per-session
+    and is untouched.
+
 ## Not changed
 
 Remote-control protocol, encryption/security model, or permission/consent
 handling. This fork's changes are limited to: pointing the client at our own
 server, reflecting our own brand name in the UI, the self-update check, and
-(as of 2026-08-27) forcing the rendezvous *transport* to TCP — none of which
-touch the actual remote-control session protocol once a connection is
+(as of 2026-08-27) the rendezvous *transport*/handshake behavior — none of
+which touch the actual remote-control session protocol once a connection is
 established. It should still be kept in sync with upstream RustDesk releases
 for security fixes.

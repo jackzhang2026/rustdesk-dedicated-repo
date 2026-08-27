@@ -1276,8 +1276,22 @@ pub async fn secure_tcp(conn: &mut FramedStream, key: &str) -> ResultType<()> {
     let Some(rs_pk) = rs_pk else {
         bail!("Handshake failed: invalid public key from rendezvous server");
     };
-    match timeout(READ_TIMEOUT, conn.next()).await? {
-        Some(Ok(bytes)) => {
+    // BCS Beam (TASK-061 #13, 2026-08-27): our self-hosted hbbs (stock
+    // `rustdesk/rustdesk-server` image, `-k _`) never proactively sends a KeyExchange
+    // message after a bare TCP connect — it's a purely passive/reactive server that waits
+    // for the client to speak first (register_pk). Verified empirically with a raw socket
+    // probe: connect + wait 8s = zero bytes from the server, confirmed independently on
+    // two separate sessions. The original code below only handled "server sent some other
+    // message" (the `_ => {}` arms) — a bare timeout was never handled and propagated as a
+    // fatal error via `?`, killing the whole TCP rendezvous connection and forcing an
+    // infinite reconnect loop (this is what made the TASK-061 TCP-only build never reach
+    // Ready). Treat a timeout the same as "server chose not to offer encrypted rendezvous":
+    // skip it and let start_tcp() proceed to register_pk() unencrypted at the
+    // ID-registration/heartbeat channel level. This does NOT affect the actual
+    // remote-control session's own end-to-end encryption, which is negotiated separately
+    // per-session — only this optional extra layer on the rendezvous channel.
+    match timeout(READ_TIMEOUT, conn.next()).await {
+        Ok(Some(Ok(bytes))) => {
             if let Ok(msg_in) = RendezvousMessage::parse_from_bytes(&bytes) {
                 match msg_in.union {
                     Some(rendezvous_message::Union::KeyExchange(ex)) => {
@@ -1303,7 +1317,12 @@ pub async fn secure_tcp(conn: &mut FramedStream, key: &str) -> ResultType<()> {
                 }
             }
         }
-        _ => {}
+        Ok(_) => {}
+        Err(_) => {
+            log::info!(
+                "Rendezvous server did not offer encrypted handshake within timeout; proceeding without it"
+            );
+        }
     }
     Ok(())
 }
