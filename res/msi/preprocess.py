@@ -429,11 +429,40 @@ def gen_custom_ARPSYSTEMCOMPONENT_True(args, dist_dir):
             lines.insert(index_start + i + 1, line)
         return lines
 
-    return gen_content_between_tags(
+    if not gen_content_between_tags(
         "Package/Components/Regs.wxs",
         "<!--$ArpStart$-->",
         "<!--$ArpEnd$-->",
         func,
+    ):
+        return False
+
+    # BCS Beam fix (2026-08-27): the whole point of --arp ("Is
+    # ARPSYSTEMCOMPONENT") is to show the custom registry ARP entry above
+    # INSTEAD OF the MSI's native one — but upstream never actually sets the
+    # ARPSYSTEMCOMPONENT property (it only exists as a commented-out line in
+    # the _False branch), so Control Panel ends up listing the SAME install
+    # twice: the custom "BCSBeamRemote" entry and the MSI's own {ProductCode}
+    # entry, identical DisplayName/version (verified in a real install's
+    # registry — both present, SystemComponent unset on the native entry, and
+    # the user read the duplicate as "the old version wasn't removed").
+    # Setting ARPSYSTEMCOMPONENT=1 stamps SystemComponent=1 on the native
+    # entry so Windows hides it; the custom entry (whose UninstallString runs
+    # msiexec /X [ProductCode], fully functional) becomes the single visible
+    # listing.
+    def func_props(lines, index_start):
+        indent = g_indent_unit * 2
+        lines.insert(
+            index_start + 1,
+            f'{indent}<Property Id="ARPSYSTEMCOMPONENT" Value="1" />\n',
+        )
+        return lines
+
+    return gen_content_between_tags(
+        "Package/Fragments/AddRemoveProperties.wxs",
+        "<!--$ArpStart$-->",
+        "<!--$ArpEnd$-->",
+        func_props,
     )
 
 
