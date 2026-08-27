@@ -1,5 +1,30 @@
 # BCS Beam (RustDesk fork) — macOS Build Handoff
 
+## UPDATE 2026-08-27 — re: the "About page still says Purslane Ltd." finding
+
+Your finding was correct **against the repo state you could see at the time** — and is
+now resolved by a push, not a new fix. What happened:
+
+- The About-page copyright (and a full License Statement page with the complete legal
+  name, plus a dark-mode-aware sidebar wordmark, the titlebar icon, and several
+  Windows-validated MSI/installer fixes) were fixed on the Windows build machine on
+  2026-08-25 — but sat in **local-only commits** under the push-at-deploy-only policy.
+  `origin/main` (`a4be460` at the time you searched) genuinely did not contain them.
+- Jack approved a push on 2026-08-27: **`origin/main` is now `c6c0a3b`** and contains
+  everything. **`git pull` before doing any branding work** — do not patch the About
+  page yourself, it's done (`desktop_setting_page.dart` now has zero "Purslane").
+- Your inference that already-shipped Windows MSIs carry the old text is **not the
+  case**: the fix landed in the second-ever local build (2026-08-25 morning); every MSI
+  since — including everything in `dist/` and everything Jack validated — has the full
+  legal name. Nothing has shipped to customers at all yet (all builds unsigned,
+  internal-testing only). No remediation needed.
+- A full-repo sweep found two further "Purslane Ltd" stragglers: `src/main.rs`'s CLI
+  `--help` author metadata (fixed in `c6c0a3b`) and `src/ui/index.tis:388` (legacy
+  Sciter UI — **dead code for Flutter builds on every platform including macOS**, never
+  compiled in; leave it).
+
+---
+
 **Status: NOT STARTED.** Nothing in this document has been attempted or verified — no
 macOS machine has been touched in this project yet. This is a from-scratch plan derived
 by reading this repo's own build scripts and CI recipe (`.github/workflows/flutter-build.yml`,
