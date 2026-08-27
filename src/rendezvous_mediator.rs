@@ -156,6 +156,15 @@ impl RendezvousMediator {
         let mut reg_timeout = MIN_REG_TIMEOUT;
         const MAX_FAILS1: i64 = 2;
         const MAX_FAILS2: i64 = 4;
+        // BCS Beam (TASK-061 #13, 2026-08-27): if we have NEVER received a single response
+        // since this loop started, give up on UDP after this many consecutive timed-out
+        // registration attempts and let start() fall back to TCP. Deliberately well past
+        // MAX_FAILS2 so this only fires for "UDP flatly doesn't work on this path" (e.g. a
+        // mainland cloud relay hop whose own egress blocks outbound UDP) — once a single
+        // response has ever arrived, `update_latency()` resets `fails` to 0 on every
+        // success, so ordinary transient packet loss on an otherwise-working path never
+        // reaches this threshold.
+        const MAX_FAILS_NEVER_WORKED: i64 = 10;
         const DNS_INTERVAL: i64 = 60_000;
         let mut fails = 0;
         let mut last_register_resp: Option<Instant> = None;
@@ -224,6 +233,13 @@ impl RendezvousMediator {
                     if timeout || (last_register_sent.is_none() && expired) {
                         if timeout {
                             fails += 1;
+                            if last_register_resp.is_none() && fails >= MAX_FAILS_NEVER_WORKED {
+                                bail!(
+                                    "UDP rendezvous to {} got zero responses after {} attempts",
+                                    host,
+                                    fails
+                                );
+                            }
                             if fails >= MAX_FAILS2 {
                                 Config::update_latency(&host, -1);
                                 old_latency = 0;
@@ -381,14 +397,32 @@ impl RendezvousMediator {
 
     pub async fn start(server: ServerPtr, host: String) -> ResultType<()> {
         log::info!("start rendezvous mediator of {}", host);
-        // BCS Beam: always use TCP rendezvous, unconditionally. Our mainland-China relay
-        // hop (CN box -> HK via TCP-encapsulated IPsec, see BCS_BEAM_OPEN_ISSUES_REGISTER.md
-        // #13) forwards TCP only — UDP 21116 has no path through it. And since the hbbs/hbbr
-        // fleet runs `-k _` (always-relay), direct P2P via UDP hole-punching was never usable
-        // in this deployment anyway, so there is no upside to attempting UDP first. This
-        // removes the need for end users to hand-edit `disable-udp = "Y"` into their local
-        // config file — it was never exposed in the Settings UI and was error-prone to set.
-        Self::start_tcp(server, host).await
+        // BCS Beam (TASK-061 #13, revised 2026-08-27): try UDP first, fall back to TCP if
+        // UDP never gets a single response. Superseded the earlier "always TCP" version
+        // (b4deeb7) once we planned for smart/GeoDNS unifying all our relay entry points
+        // (HK/SG/CN/SH) under one hostname — the client can no longer tell from the
+        // hostname alone whether it landed on a UDP-capable direct entry (HK/SG, or any
+        // residential/office network reaching them) or a TCP-only mainland relay hop
+        // (CN/SH, whose own cloud egress blocks outbound UDP). Trying UDP first preserves
+        // the P2P/lower-overhead path for the majority of users where it already works;
+        // start_udp() below now gives up and returns an error after
+        // MAX_FAILS_NEVER_WORKED consecutive registration timeouts with zero responses
+        // ever received, which we catch here and fall back to start_tcp(). Costs a bounded
+        // ~30s UDP probe on every reconnect for users on a TCP-only path — a documented
+        // tradeoff, not a bug; caching "last transport that worked" per-server to skip the
+        // probe on subsequent reconnects is a reasonable follow-up, not done here to keep
+        // this diff small and easy to verify without a local compiler.
+        match Self::start_udp(server.clone(), host.clone()).await {
+            Err(e) => {
+                log::warn!(
+                    "UDP rendezvous to {} unavailable ({}), falling back to TCP",
+                    host,
+                    e
+                );
+                Self::start_tcp(server, host).await
+            }
+            ok => ok,
+        }
     }
 
     async fn handle_request_relay(&self, rr: RequestRelay, server: ServerPtr) -> ResultType<()> {

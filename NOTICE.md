@@ -90,21 +90,36 @@ attribution visible.
     a real download page is a follow-up once one exists, not done here to
     avoid shipping a dead link.
 
-- Rendezvous transport forced to TCP-only (TASK-061 #13,
-  BCS_BEAM_OPEN_ISSUES_REGISTER.md, 2026-08-27):
-  - `src/rendezvous_mediator.rs`: `RendezvousMediator::start()` now
-    unconditionally calls `start_tcp()` instead of branching on
-    `is_http_proxy` / the `disable-udp` builtin option / `TEST_TCP`. Our
-    mainland-China relay hop (CN box → this HK server via a TCP-encapsulated
-    IPsec tunnel) only forwards TCP; UDP 21116 has no path through it, and
-    since the hbbs/hbbr fleet runs `-k _` (always-relay), direct P2P via UDP
-    hole-punching was never usable in this deployment anyway. This also
-    removes the need for end users to hand-edit `disable-udp = "Y"` into
-    their local `BCS Beam2.toml` — that option was never exposed in the
-    Settings UI and was error-prone for non-technical staff to set by hand.
-    Upstream's `start_udp()` path (and the options/flags that used to select
-    it) are left in the tree, just never called — reverting is a one-line
-    change if a future non-relay-forced deployment ever wants UDP back.
+- Rendezvous transport: try UDP first, fall back to TCP (TASK-061 #13,
+  BCS_BEAM_OPEN_ISSUES_REGISTER.md; first version 2026-08-27, revised same
+  day once smart/GeoDNS plans made a hostname-based decision impossible —
+  see the register for the full history, superseded designs kept there for
+  context):
+  - `src/rendezvous_mediator.rs`: `RendezvousMediator::start()` now calls
+    `start_udp()` first; if that returns an error it falls back to
+    `start_tcp()`. `start_udp()` itself gives up and returns an error after
+    `MAX_FAILS_NEVER_WORKED` (10) consecutive registration timeouts with
+    zero responses ever received in that session — deliberately well past
+    the pre-existing `MAX_FAILS2` (4) threshold so this only fires for "UDP
+    flatly doesn't work on this path," not transient packet loss. Costs a
+    bounded ~30s UDP probe on every reconnect for clients on a TCP-only
+    path; a documented tradeoff, not a bug.
+  - Why not decide by hostname instead: our relay fleet (HK/SG direct entry,
+    CN/SH mainland relay hops whose own cloud egress blocks outbound UDP) is
+    planned to sit behind a single smart-DNS hostname, so the client can't
+    tell from the configured server name alone which kind of entry point it
+    will land on. Trying UDP and falling back per-connection works
+    regardless of which backend a given DNS answer routes to.
+  - This revises the first version of this change (commit `b4deeb7`, same
+    day) which forced TCP unconditionally for every client regardless of
+    location — correct for the mainland-relay case but a regression for
+    everyone connecting directly to HK/SG (or any residential/office network
+    reaching them), who lost the lower-overhead direct UDP path for no
+    benefit.
+  - This also removes the need for end users to hand-edit
+    `disable-udp = "Y"` into their local `BCS Beam2.toml` — that option was
+    never exposed in the Settings UI and was error-prone for non-technical
+    staff to set by hand; it is now decided automatically per-connection.
 
 - Rendezvous handshake timeout no longer fatal (TASK-061 #13,
   BCS_BEAM_OPEN_ISSUES_REGISTER.md, 2026-08-27, following the TCP-only change
