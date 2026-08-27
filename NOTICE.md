@@ -90,10 +90,28 @@ attribution visible.
     a real download page is a follow-up once one exists, not done here to
     avoid shipping a dead link.
 
+- Rendezvous transport forced to TCP-only (TASK-061 #13,
+  BCS_BEAM_OPEN_ISSUES_REGISTER.md, 2026-08-27):
+  - `src/rendezvous_mediator.rs`: `RendezvousMediator::start()` now
+    unconditionally calls `start_tcp()` instead of branching on
+    `is_http_proxy` / the `disable-udp` builtin option / `TEST_TCP`. Our
+    mainland-China relay hop (CN box → this HK server via a TCP-encapsulated
+    IPsec tunnel) only forwards TCP; UDP 21116 has no path through it, and
+    since the hbbs/hbbr fleet runs `-k _` (always-relay), direct P2P via UDP
+    hole-punching was never usable in this deployment anyway. This also
+    removes the need for end users to hand-edit `disable-udp = "Y"` into
+    their local `BCS Beam2.toml` — that option was never exposed in the
+    Settings UI and was error-prone for non-technical staff to set by hand.
+    Upstream's `start_udp()` path (and the options/flags that used to select
+    it) are left in the tree, just never called — reverting is a one-line
+    change if a future non-relay-forced deployment ever wants UDP back.
+
 ## Not changed
 
-Remote-control protocol, encryption/security model, permission/consent
-handling, or any other functional behavior beyond the self-update check noted
-above. This fork exists solely to point the client at our own server and to
-reflect our own brand name in the UI — it is not a security-relevant fork and
-should be kept in sync with upstream RustDesk releases for security fixes.
+Remote-control protocol, encryption/security model, or permission/consent
+handling. This fork's changes are limited to: pointing the client at our own
+server, reflecting our own brand name in the UI, the self-update check, and
+(as of 2026-08-27) forcing the rendezvous *transport* to TCP — none of which
+touch the actual remote-control session protocol once a connection is
+established. It should still be kept in sync with upstream RustDesk releases
+for security fixes.
