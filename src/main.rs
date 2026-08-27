@@ -50,8 +50,12 @@ fn main() {
     );
     let matches = App::new("rustdesk")
         .version(crate::VERSION)
-        .author("Purslane Ltd<info@rustdesk.com>")
-        .about("RustDesk command line tool")
+        // BCS Beam (2026-08-27): CLI --help author metadata; last non-dead-code
+        // "Purslane Ltd" straggler found by a full-repo sweep (the only other
+        // one is src/ui/index.tis, the legacy Sciter UI our Flutter-only
+        // builds never compile).
+        .author("BROCENT CLOUD SERVICE CO., LTD (BCS TEAM)")
+        .about("BCS Beam command line tool")
         .args_from_usage(&args)
         .get_matches();
     use hbb_common::{config::LocalConfig, env_logger::*};
