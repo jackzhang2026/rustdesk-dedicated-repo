@@ -118,7 +118,18 @@ dev_dependencies:
 
 dependency_overrides:
   intl: ^0.19.0
-  
+  # BCS Beam local-build fix (2026-08-25): our Dart SDK (3.5.4, from the
+  # rustdesk-pinned Flutter 3.24.5) no longer ships bin/snapshots/
+  # frontend_server.dart.snapshot (the legacy JIT snapshot) — only the AOT
+  # variant. build_runner 2.4.8 depends on frontend_server_client ^3.0.0,
+  # which hardcodes the JIT path and has no fallback, so `dart run
+  # build_runner build` fails with "Could not find a command named
+  # ...frontend_server.dart.snapshot". frontend_server_client 4.0.0's
+  # changelog: "By default, start the frontend server from the AOT snapshot
+  # shipped in the Dart SDK" — exactly this fix. Dev-tooling-only override,
+  # does not affect the shipped app.
+  frontend_server_client: ^4.0.0
+
 # rerun: flutter pub run flutter_launcher_icons
 flutter_icons:
   image_path: "../res/icon.png"

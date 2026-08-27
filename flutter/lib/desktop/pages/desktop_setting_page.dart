@@ -58,6 +58,11 @@ enum SettingsTabKey {
   account,
   printer,
   about,
+  // BCS Beam local-build addition (2026-08-25): separate in-app page for the
+  // company/legal license statement, linked from the sidebar's
+  // "License Statement" text (see desktop_home_page.dart's
+  // _buildLicenseLink()). See [[bcs-beam-local-build]] for background.
+  license,
 }
 
 class DesktopSettingPage extends StatefulWidget {
@@ -78,6 +83,7 @@ class DesktopSettingPage extends StatefulWidget {
     if (!bind.isDisableAccount()) SettingsTabKey.account,
     if (isWindows) SettingsTabKey.printer,
     SettingsTabKey.about,
+    if (bind.isCustomClient()) SettingsTabKey.license,
   ];
 
   DesktopSettingPage({Key? key, required this.initialTabkey}) : super(key: key);
@@ -209,6 +215,10 @@ class _DesktopSettingPageState extends State<DesktopSettingPage>
           settingTabs
               .add(_TabInfo(tab, 'About', Icons.info_outline, Icons.info));
           break;
+        case SettingsTabKey.license:
+          settingTabs.add(_TabInfo(
+              tab, 'License', Icons.description_outlined, Icons.description));
+          break;
       }
     }
     return settingTabs;
@@ -241,6 +251,9 @@ class _DesktopSettingPageState extends State<DesktopSettingPage>
           break;
         case SettingsTabKey.about:
           children.add(const _About());
+          break;
+        case SettingsTabKey.license:
+          children.add(const _LicenseStatement());
           break;
       }
     }
@@ -2116,8 +2129,14 @@ class _AboutState extends State<_About> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // BCS Beam local-build fix (2026-08-25): this line
+                          // (unlike License.rtf) isn't touched by
+                          // res/msi/preprocess.py's rebranding substitution --
+                          // it's Dart UI text, not the MSI's EULA -- so it was
+                          // still showing the un-rebranded upstream copyright
+                          // holder. See [[bcs-beam-local-build]].
                           Text(
-                            'Copyright © ${DateTime.now().toString().substring(0, 4)} Purslane Ltd.\n$license',
+                            'Copyright © ${DateTime.now().toString().substring(0, 4)} BROCENT CLOUD SERVICE CO., LTD (BCS TEAM).\n$license',
                             style: const TextStyle(color: Colors.white),
                           ),
                           Text(
@@ -2137,6 +2156,69 @@ class _AboutState extends State<_About> {
         ]),
       );
     });
+  }
+}
+
+// BCS Beam local-build addition (2026-08-25): in-app License Statement page,
+// linked from the sidebar's "License Statement" text (formerly "Powered by
+// RustDesk", see desktop_home_page.dart's _buildLicenseLink()). Modeled on
+// _About above. See [[bcs-beam-local-build]].
+class _LicenseStatement extends StatefulWidget {
+  const _LicenseStatement({Key? key}) : super(key: key);
+
+  @override
+  State<_LicenseStatement> createState() => _LicenseStatementState();
+}
+
+class _LicenseStatementState extends State<_LicenseStatement> {
+  @override
+  Widget build(BuildContext context) {
+    const linkStyle = TextStyle(decoration: TextDecoration.underline);
+    final year = DateTime.now().toString().substring(0, 4);
+    return SingleChildScrollView(
+      child: _Card(title: 'License Statement', children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 8.0),
+            SelectionArea(
+              child: Text(
+                'BCS Beam is developed, distributed, and supported by '
+                'BROCENT CLOUD SERVICE CO., LTD (BCS TEAM).',
+              ).marginSymmetric(vertical: 4.0),
+            ),
+            SelectionArea(
+              child: Text(
+                'BCS Beam is built on the open-source RustDesk project and '
+                'is licensed under the GNU Affero General Public License '
+                'v3.0 (AGPL-3.0). The complete corresponding source code is '
+                'published at the project repository, as required by that '
+                'license.',
+              ).marginSymmetric(vertical: 4.0),
+            ),
+            InkWell(
+                onTap: () {
+                  launchUrlString('https://www.brocent.com');
+                },
+                child: Text(
+                  'www.brocent.com',
+                  style: linkStyle,
+                ).marginSymmetric(vertical: 4.0)),
+            Container(
+              decoration: const BoxDecoration(color: Color(0xFF2c8cff)),
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+              child: SelectionArea(
+                child: Text(
+                  'Copyright © $year BROCENT CLOUD SERVICE CO., LTD (BCS TEAM).\n'
+                  'All rights reserved.',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            ).marginSymmetric(vertical: 4.0),
+          ],
+        ).marginOnly(left: _kContentHMargin)
+      ]),
+    );
   }
 }
 

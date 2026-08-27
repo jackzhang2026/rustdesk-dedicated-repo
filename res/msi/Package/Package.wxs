@@ -4,7 +4,11 @@
 
 	<?include Includes.wxi?>
 
-	<Package Name="$(var.Product)" Version="$(var.Version)" Manufacturer="$(var.Manufacturer)" Language="!(loc.ProductLanguage)" UpgradeCode="$(var.UpgradeCode)" Scope="perMachine">
+	<!-- BCS Beam fix (2026-08-25): ProductDisplayName (spaced, e.g. "BCS Beam")
+	     is the user-visible wizard title / ARP name; $(var.Product) stays the
+	     space-free technical identifier used for the exe filename, registry
+	     keys, and service name elsewhere. See Includes.wxi / preprocess.py. -->
+	<Package Name="$(var.ProductDisplayName)" Version="$(var.Version)" Manufacturer="$(var.Manufacturer)" Language="!(loc.ProductLanguage)" UpgradeCode="$(var.UpgradeCode)" Scope="perMachine">
 
 		<SummaryInformation Keywords="Installer" Description="$(var.Description)" Codepage="!(loc.SummaryCodepage)" />
 
@@ -23,6 +27,13 @@
 
 		<InstallUISequence>
 			<Show Dialog="UI_AnotherAppDialog" Before="WelcomeDlg" Condition="Not installed AND APP_WINDOWS_INSTALLER=&quot;#0&quot;"/>
+			<!-- BCS Beam addition (2026-08-27): when an older MSI version is
+			     installed, MajorUpgrade used to remove it silently. Now the
+			     user is asked to consent first; declining aborts the install
+			     and leaves the old version untouched. WIX_UPGRADE_DETECTED is
+			     set by MajorUpgrade's FindRelatedProducts, which runs earlier
+			     in the UI sequence than any dialog. -->
+			<Show Dialog="UI_OldVersionDialog" Before="WelcomeDlg" Condition="Not installed AND WIX_UPGRADE_DETECTED"/>
 		</InstallUISequence>
 
 		<InstallExecuteSequence>

@@ -52,6 +52,10 @@ as it does for the en-us file — so "启动 RustDesk。" becomes "启动 BCS Be
 	<!-- User Interfaces -->
 	<String Id="AnotherAppDialogTitle" Value="取消安装。"/>
 	<String Id="AnotherAppDialogDescription" Value="该应用已通过自安装方式安装，请先卸载后再继续。"/>
+	<String Id="OldVersionDialog_Title" Value="检测到旧版本"/>
+	<String Id="OldVersionDialogTitle" Value="检测到已安装旧版本 RustDesk。"/>
+	<String Id="OldVersionDialogDescription" Value="继续安装将删除旧版本并替换为当前版本，您的设置和连接 ID 会保留。点击“同意”继续安装，或点击“取消”保留旧版本并退出安装。"/>
+	<String Id="OldVersionDialogAgree" Value="同意"/>
 
 	<String Id="MyInstallDirDlgDesktopShortcuts" Value="创建桌面图标" />
 	<String Id="MyInstallDirDlgStartMenuShortcuts" Value="创建开始菜单快捷方式" />

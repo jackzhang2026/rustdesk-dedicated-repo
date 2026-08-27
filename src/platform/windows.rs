@@ -460,7 +460,7 @@ fn service_main(arguments: Vec<OsString>) {
 
 pub fn start_os_service() {
     if let Err(e) =
-        windows_service::service_dispatcher::start(crate::get_app_name(), ffi_service_main)
+        windows_service::service_dispatcher::start(get_app_name_technical(), ffi_service_main)
     {
         log::error!("start_service failed: {}", e);
     }
@@ -525,7 +525,7 @@ async fn run_service(_arguments: Vec<OsString>) -> ResultType<()> {
     };
 
     // Register system service event handler
-    let status_handle = service_control_handler::register(crate::get_app_name(), event_handler)?;
+    let status_handle = service_control_handler::register(get_app_name_technical(), event_handler)?;
 
     let next_status = ServiceStatus {
         // Should match the one from system service registry
@@ -972,6 +972,35 @@ pub fn lock_screen() {
 
 const IS1: &str = "{54E86BC2-6C85-41F3-A9EB-1A94AC9B1F93}_is1";
 
+// BCS Beam local-build fix (2026-08-25): crate::get_app_name() ("BCS Beam", a
+// spaced *display* name used for window title / tray text / the "RustDesk"->
+// app_name substitution in src/lang.rs that drives nearly every translated UI
+// string) must NOT be used for Windows-technical identifiers in this file —
+// service name, Uninstall registry subkey, install-folder name, exe filename,
+// process name for taskkill/process-matching. Our MSI build (res/msi, driven
+// by `--app-name "BCSBeamRemote"` in .github/workflows/build-bcsbeam.yml) uses
+// a *different*, space-free technical name for exactly those things: the
+// installed exe is literally "BCSBeamRemote.exe", the Uninstall registry
+// subkey is "...\Uninstall\BCSBeamRemote", the Windows service the MSI's
+// CreateStartService custom action registers with the SCM is named
+// "BCSBeamRemote" (see res/msi/Package/Components/RustDesk.wxs's
+// CreateStartService.SetParam). Before this fix, every function below used
+// the spaced display name instead, causing two real bugs verified against a
+// built MSI: (1) is_installed() constructed the expected exe path as
+// "...\BCS Beam.exe", which never exists (the real file is
+// "...\BCSBeamRemote.exe"), so it always returned false and the "Due to UAC"
+// install nag never went away even after installing via MSI; (2)
+// start_os_service()/run_service() registered with windows_service's SCM
+// dispatcher under the spaced name, which does not match the "BCSBeamRemote"
+// service name the MSI's CreateStartService action registered — the SCM
+// requires an exact match, so the background service the MSI creates would
+// fail to start. Keep this equal to the MSI's --app-name value.
+const APP_NAME_TECHNICAL: &str = "BCSBeamRemote";
+
+fn get_app_name_technical() -> String {
+    APP_NAME_TECHNICAL.to_owned()
+}
+
 fn get_subkey(name: &str, wow: bool) -> String {
     let tmp = format!(
         "HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{}",
@@ -993,7 +1022,7 @@ fn get_valid_subkey() -> String {
     if !get_reg_of(&subkey, "InstallLocation").is_empty() {
         return subkey;
     }
-    let app_name = crate::get_app_name();
+    let app_name = get_app_name_technical();
     let subkey = get_subkey(&app_name, true);
     if !get_reg_of(&subkey, "InstallLocation").is_empty() {
         return subkey;
@@ -1003,7 +1032,7 @@ fn get_valid_subkey() -> String {
 
 // Return install options other than InstallLocation.
 pub fn get_install_options() -> String {
-    let app_name = crate::get_app_name();
+    let app_name = get_app_name_technical();
     let subkey = format!(".{}", app_name.to_lowercase());
     let mut opts = HashMap::new();
 
@@ -1036,7 +1065,7 @@ pub fn get_install_info() -> (String, String, String, String) {
 }
 
 fn get_default_install_info() -> (String, String, String, String) {
-    get_install_info_with_subkey(get_subkey(&crate::get_app_name(), false))
+    get_install_info_with_subkey(get_subkey(&get_app_name_technical(), false))
 }
 
 fn get_default_install_path() -> String {
@@ -1053,7 +1082,7 @@ fn get_default_install_path() -> String {
             pf = tmp;
         }
     }
-    format!("{}\\{}", pf, crate::get_app_name())
+    format!("{}\\{}", pf, get_app_name_technical())
 }
 
 pub fn check_update_broker_process() -> ResultType<()> {
@@ -1109,9 +1138,9 @@ fn get_install_info_with_subkey(subkey: String) -> (String, String, String, Stri
     path = path.trim_end_matches('\\').to_owned();
     let start_menu = format!(
         "%ProgramData%\\Microsoft\\Windows\\Start Menu\\Programs\\{}",
-        crate::get_app_name()
+        get_app_name_technical()
     );
-    let exe = format!("{}\\{}.exe", path, crate::get_app_name());
+    let exe = format!("{}\\{}.exe", path, get_app_name_technical());
     (subkey, path, start_menu, exe)
 }
 
@@ -1146,7 +1175,7 @@ fn get_after_install(
     reg_value_desktop_shortcuts: Option<String>,
     reg_value_printer: Option<String>,
 ) -> String {
-    let app_name = crate::get_app_name();
+    let app_name = get_app_name_technical();
     let ext = app_name.to_lowercase();
 
     // reg delete HKEY_CURRENT_USER\Software\Classes for
@@ -1224,7 +1253,7 @@ pub fn install_me(options: &str, path: String, silent: bool, debug: bool) -> Res
     if versions.len() > 2 {
         version_build = versions[2];
     }
-    let app_name = crate::get_app_name();
+    let app_name = get_app_name_technical();
 
     let tmp_path = std::env::temp_dir().to_string_lossy().to_string();
     let mk_shortcut = write_cmds(
@@ -1272,7 +1301,7 @@ oLink.Save
         shortcuts = format!(
             "copy /Y \"{}\\{}.lnk\" \"%PUBLIC%\\Desktop\\\"",
             tmp_path,
-            crate::get_app_name()
+            get_app_name_technical()
         );
         reg_value_desktop_shortcuts = "1".to_owned();
     }
@@ -1371,7 +1400,7 @@ copy /Y \"{tmp_path}\\Uninstall {app_name}.lnk\" \"{path}\\\"
     run_cmds(cmds, debug, "install")?;
     if install_printer {
         allow_err!(remote_printer::install_update_printer(
-            &crate::get_app_name()
+            &get_app_name_technical()
         ));
     }
     run_after_run_cmds(silent);
@@ -1392,7 +1421,7 @@ pub fn run_before_uninstall() -> ResultType<()> {
 }
 
 fn get_before_uninstall(kill_self: bool) -> String {
-    let app_name = crate::get_app_name();
+    let app_name = get_app_name_technical();
     let ext = app_name.to_lowercase();
     let filter = if kill_self {
         "".to_string()
@@ -1440,13 +1469,13 @@ fn get_uninstall(kill_self: bool) -> String {
     ",
         before_uninstall=get_before_uninstall(kill_self),
         uninstall_amyuni_idd=get_uninstall_amyuni_idd(),
-        app_name = crate::get_app_name(),
+        app_name = get_app_name_technical(),
     )
 }
 
 pub fn uninstall_me(kill_self: bool) -> ResultType<()> {
     if crate::platform::is_win_10_or_greater() {
-        remote_printer::uninstall_printer(&crate::get_app_name());
+        remote_printer::uninstall_printer(&get_app_name_technical());
     }
     run_cmds(get_uninstall(kill_self), true, "uninstall")
 }
@@ -1463,7 +1492,7 @@ fn write_cmds(cmds: String, ext: &str, tip: &str) -> ResultType<std::path::PathB
             tmp = dir;
         }
     }
-    tmp.push(format!("{}_{}.{}", crate::get_app_name(), tip, ext));
+    tmp.push(format!("{}_{}.{}", get_app_name_technical(), tip, ext));
     let mut file = std::fs::File::create(&tmp)?;
     if ext == "bat" {
         let tmp2 = get_undone_file(&tmp)?;
@@ -2269,7 +2298,7 @@ pub fn uninstall_service(show_new_window: bool, _: bool) -> bool {
     taskkill /F /IM {broker_exe}
     taskkill /F /IM {app_name}.exe{filter}
     ",
-        app_name = crate::get_app_name(),
+        app_name = get_app_name_technical(),
         broker_exe = WIN_TOPMOST_INJECTED_PROCESS_EXE,
     );
     if let Err(err) = run_cmds(cmds, false, "uninstall") {
@@ -2300,7 +2329,7 @@ copy /Y \"{tmp_path}\\{app_name} Tray.lnk\" \"%PROGRAMDATA%\\Microsoft\\Windows\
 {create_service}
 if exist \"{tray_shortcut}\" del /f /q \"{tray_shortcut}\"
     ",
-        app_name = crate::get_app_name(),
+        app_name = get_app_name_technical(),
         import_config = get_import_config(&exe),
         create_service = get_create_service(&exe),
     );
@@ -2326,7 +2355,7 @@ Set oLink = oWS.CreateShortcut(sLinkFile)
     oLink.Arguments = \"--tray\"
 oLink.Save
         ",
-            app_name = crate::get_app_name(),
+            app_name = get_app_name_technical(),
         ),
         "vbs",
         "tray_shortcut",
@@ -2348,7 +2377,7 @@ sc start {app_name}
 sc stop {app_name}
 sc delete {app_name}
 ",
-    app_name = crate::get_app_name(),
+    app_name = get_app_name_technical(),
     config_path=Config::file().to_str().unwrap_or(""),
 )
 }
@@ -2361,13 +2390,13 @@ fn get_create_service(exe: &str) -> String {
     if stop {
         format!("
 if exist \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{app_name} Tray.lnk\" del /f /q \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{app_name} Tray.lnk\"
-", app_name = crate::get_app_name())
+", app_name = get_app_name_technical())
     } else {
         format!("
 sc create {app_name} binpath= \"\\\"{exe}\\\" --service\" start= auto DisplayName= \"{app_name} Service\"
 sc start {app_name}
 ",
-    app_name = crate::get_app_name())
+    app_name = get_app_name_technical())
     }
 }
 
@@ -2555,7 +2584,7 @@ fn get_uninstall_amyuni_idd() -> String {
 
 #[inline]
 pub fn is_self_service_running() -> bool {
-    is_service_running(&crate::get_app_name())
+    is_service_running(&get_app_name_technical())
 }
 
 pub fn is_service_running(service_name: &str) -> bool {
@@ -2587,7 +2616,7 @@ pub fn try_kill_rustdesk_main_window_process() -> ResultType<()> {
         .map(|x| x.user_id())
         .unwrap_or_default();
     let my_pid = std::process::id();
-    let app_name = crate::get_app_name().to_lowercase();
+    let app_name = get_app_name_technical().to_lowercase();
     if app_name.is_empty() {
         bail!("app name is empty");
     }

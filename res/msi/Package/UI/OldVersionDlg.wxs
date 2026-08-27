@@ -1,0 +1,24 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+	<Fragment>
+		<!-- BCS Beam addition (2026-08-27): consent dialog shown when an older
+		     MSI-installed version is detected (WIX_UPGRADE_DETECTED, see
+		     Package.wxs's InstallUISequence). MajorUpgrade removes the old
+		     version as part of this install; this dialog makes that explicit
+		     and lets the user decline (Cancel aborts the whole install,
+		     leaving the old version untouched). Modeled on AnotherApp.wxs. -->
+		<UI>
+			<Dialog Id="UI_OldVersionDialog" Width="370" Height="270" Title="!(loc.OldVersionDialog_Title)">
+				<Control Id="Agree" Type="PushButton" X="236" Y="243" Width="62" Height="17" Default="yes" Text="!(loc.OldVersionDialogAgree)">
+					<Publish Event="EndDialog" Value="Return" />
+				</Control>
+				<Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
+					<Publish Event="EndDialog" Value="Exit" />
+				</Control>
+				<Control Id="Bitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="234" TabSkip="no" Text="!(loc.ExitDialogBitmap)" />
+				<Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+				<Control Id="Title" Type="Text" X="135" Y="20" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="!(loc.OldVersionDialogTitle)" />
+				<Control Id="Description" Type="Text" X="135" Y="70" Width="220" Height="80" Transparent="yes" NoPrefix="yes" Text="!(loc.OldVersionDialogDescription)" />
+			</Dialog>
+		</UI>
+	</Fragment>
+</Wix>

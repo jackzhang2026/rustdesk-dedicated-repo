@@ -16,6 +16,24 @@ cert.pfx
 *png
 *svg
 *jpg
+# BCS Beam local-build fix (2026-08-25): the *png/*svg/*jpg rules above are
+# upstream's own (meant for build-artifact icons), but they're repo-root-wide
+# and silently swallow legitimate committed source assets too -- this is
+# exactly HANDOFF_LOCAL_BUILD.md's landmine #1. flutter/assets/logo.png (the
+# sidebar brand logo rendered by loadLogo() in flutter/lib/common.dart) was a
+# victim of this: an earlier branding session's `git add .` silently skipped
+# it, so it was never committed and the sidebar showed nothing there. Un-swallow
+# just this one file rather than loosening the blanket rule (which upstream
+# code elsewhere may rely on for legitimate generated-icon exclusion).
+!flutter/assets/logo.png
+# Same landmine, second victim: the in-app titlebar icon (loadIcon() in
+# flutter/lib/common.dart, rendered in tabbar_widget.dart's tab strip) reads
+# flutter/assets/icon.png first, falling back to the still-stock-RustDesk
+# assets/icon.svg only if the .png is missing -- which it always was.
+!flutter/assets/icon.png
+# Third victim: dark-mode variant of the sidebar wordmark (loadLogo() in
+# flutter/lib/common.dart), added 2026-08-25 for dark-mode contrast.
+!flutter/assets/logo_dark.png
 sciter.dll
 **pdb
 src/bridge_generated.rs

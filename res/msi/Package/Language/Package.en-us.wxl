@@ -48,6 +48,10 @@ This file contains the declaration of all the localizable strings.
 	<!-- User Interfaces -->
 	<String Id="AnotherAppDialogTitle" Value="Cancel installation."/>
 	<String Id="AnotherAppDialogDescription" Value="The application is installed by self-installation method, please uninstall it first."/>
+	<String Id="OldVersionDialog_Title" Value="Previous version detected"/>
+	<String Id="OldVersionDialogTitle" Value="An older version of RustDesk is installed."/>
+	<String Id="OldVersionDialogDescription" Value="Continuing will remove the older version and replace it with this one. Your settings and connection ID are kept. Click Agree to continue, or Cancel to keep the older version and exit setup."/>
+	<String Id="OldVersionDialogAgree" Value="Agree"/>
 
 	<String Id="MyInstallDirDlgDesktopShortcuts" Value="Create desktop icon" />
 	<String Id="MyInstallDirDlgStartMenuShortcuts" Value="Create start menu shortcuts" />

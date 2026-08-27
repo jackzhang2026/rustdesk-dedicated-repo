@@ -3440,13 +3440,22 @@ Widget loadPowered(BuildContext context) {
 }
 
 // max 300 x 60
-Widget loadLogo() {
+// BCS Beam local-build fix (2026-08-25): the wordmark's "BEAM" text is
+// near-black, which disappears against a dark-mode sidebar background
+// (Theme.of(context).colorScheme.background goes near-black too) --
+// confirmed by eye on a real dark-mode Windows install. logo_dark.png is a
+// separate render with "BEAM" in near-white for legibility there; pick
+// between the two based on the current theme brightness, same as any other
+// theme-aware asset in Flutter.
+Widget loadLogo(BuildContext context) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final asset = isDark ? 'assets/logo_dark.png' : 'assets/logo.png';
   return FutureBuilder<ByteData>(
-      future: rootBundle.load('assets/logo.png'),
+      future: rootBundle.load(asset),
       builder: (BuildContext context, AsyncSnapshot<ByteData> snapshot) {
         if (snapshot.hasData) {
           final image = Image.asset(
-            'assets/logo.png',
+            asset,
             fit: BoxFit.contain,
             errorBuilder: (ctx, error, stackTrace) {
               return Container();

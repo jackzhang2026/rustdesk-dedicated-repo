@@ -85,6 +85,20 @@ def make_parser():
     parser.add_argument(
         "--product-name", type=str, default="", help="User-visible product/display name (may contain spaces). Defaults to --app-name."
     )
+    # BCS Beam local-build fix (2026-08-25): update_license_file() used to reuse
+    # --product-name for BOTH of the upstream RTF's placeholder substitutions
+    # ("RustDesk" -> the product, e.g. "the BCS Beam software application", which
+    # is correct) AND ("Purslane Ltd" -> the *legal entity*, e.g. "under which
+    # BCS Beam. (hereinafter...", which is wrong -- that line is a company/legal
+    # name, not a product name). --company-legal-name decouples that second
+    # substitution so the EULA can show a proper legal name instead of the
+    # product name. Defaults to --manufacturer if omitted.
+    parser.add_argument(
+        "--company-legal-name", type=str, default="",
+        help="Full legal company name for the EULA's copyright/legal-entity line "
+             "(replaces the upstream 'Purslane Ltd' placeholder). Defaults to "
+             "--manufacturer.",
+    )
     parser.add_argument(
         "-v", "--version", type=str, default="", help="The app version."
     )
@@ -168,7 +182,20 @@ def gen_pre_vars(args, dist_dir):
         to_insert_lines = [
             f'{indent}<?define Version="{g_version}" ?>\n',
             f'{indent}<?define Manufacturer="{args.manufacturer}" ?>\n',
-            f'{indent}<?define Product="{args.product_name}" ?>\n',
+            # BCS Beam local-build fix (2026-08-25): $(var.Product) is used
+            # PERVASIVELY as a technical identifier — the actual exe filename
+            # (RustDesk.wxs's <File Name="$(var.Product).exe">, which WiX must
+            # find on disk), registry key names, service name, folder names.
+            # It must stay space-free (= app_name, matching the renamed dist
+            # exe), not the spaced display name. Only genuinely user-visible
+            # text (the wizard title / Package Name) should show the spaced
+            # product_name — that's ProductDisplayName below, wired into
+            # Package.wxs's <Package Name="$(var.ProductDisplayName)">.
+            # Verified against a real WIX0103 "Cannot find the File file
+            # '...\\BCS Beam.exe'" build failure — Product=product_name broke
+            # every technical reference, not just the display name.
+            f'{indent}<?define Product="{args.app_name}" ?>\n',
+            f'{indent}<?define ProductDisplayName="{args.product_name}" ?>\n',
             f'{indent}<?define Description="{args.product_name} Installer" ?>\n',
             f'{indent}<?define ProductLower="{args.app_name.lower()}" ?>\n',
             f'{indent}<?define RegKeyRoot=".$(var.ProductLower)" ?>\n',
@@ -467,7 +494,13 @@ def init_global_vars(dist_dir, app_name, args):
 
     def read_process_output(args):
         process = subprocess.Popen(
-            f"{dist_app} {args}",
+            # BCS Beam local-build fix (2026-08-25): unquoted shell=True command
+            # splits on ANY space in the full path, not just in app_name (the
+            # documented --app-name fix covers the exe's own name, but our repo
+            # checkout itself lives under "C:\My Software Dev\BCS BEAM\..." which
+            # has spaces too). Quote the executable path; args stay unquoted since
+            # they're always simple flags like --version / --build-date.
+            f'"{dist_app}" {args}',
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             shell=True,
@@ -499,7 +532,7 @@ def init_global_vars(dist_dir, app_name, args):
     return True
 
 
-def update_license_file(app_name):
+def update_license_file(app_name, company_legal_name):
     if app_name == "RustDesk":
         return
     license_file = Path(sys.argv[0]).parent.joinpath("Package/License.rtf")
@@ -507,7 +540,10 @@ def update_license_file(app_name):
         license_content = f.read()
     license_content = license_content.replace("website rustdesk.com and other ", "")
     license_content = license_content.replace("RustDesk", app_name)
-    license_content = re.sub("Purslane Ltd", app_name, license_content, flags=re.IGNORECASE)
+    # BCS Beam local-build fix (2026-08-25): this placeholder is the EULA's
+    # legal-entity/copyright-holder name, not the product name -- use
+    # company_legal_name (see --company-legal-name), not app_name.
+    license_content = re.sub("Purslane Ltd", company_legal_name, license_content, flags=re.IGNORECASE)
     with open(license_file, "w", encoding="utf-8") as f:
         f.write(license_content)
 
@@ -538,6 +574,8 @@ if __name__ == "__main__":
     # that read args.product_name see the resolved value.
     if not args.product_name:
         args.product_name = args.app_name
+    if not args.company_legal_name:
+        args.company_legal_name = args.manufacturer
     dist_dir = Path(sys.argv[0]).parent.joinpath(args.dist_dir).resolve()
 
     if not prepare_resources():
@@ -546,7 +584,7 @@ if __name__ == "__main__":
     if not init_global_vars(dist_dir, app_name, args):
         sys.exit(-1)
 
-    update_license_file(args.product_name)
+    update_license_file(args.product_name, args.company_legal_name)
 
     if not gen_pre_vars(args, dist_dir):
         sys.exit(-1)

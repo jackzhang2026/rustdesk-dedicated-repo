@@ -80,14 +80,15 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     final isOutgoingOnly = bind.isOutgoingOnly();
     final children = <Widget>[
       if (!isOutgoingOnly) buildPresetPasswordWarning(),
-      if (bind.isCustomClient())
-        Align(
-          alignment: Alignment.center,
-          child: loadPowered(context),
-        ),
+      // BCS Beam local-build change (2026-08-25): the "Powered by RustDesk"
+      // link (loadPowered from common.dart) used to render here, centered at
+      // the top of the sidebar. It now renders as "License Statement",
+      // pinned to the bottom-left of the sidebar instead -- see
+      // _buildLicenseLink() and its Positioned(...) below. See
+      // [[bcs-beam-local-build]].
       Align(
         alignment: Alignment.center,
-        child: loadLogo(),
+        child: loadLogo(context),
       ),
       buildTip(context),
       if (!isOutgoingOnly) buildIDBoard(context),
@@ -172,8 +173,48 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                     onHover: (value) => _editHover.value = value,
                   ),
                 ),
-              )
+              ),
+            if (bind.isCustomClient())
+              Positioned(
+                // Leave room above the settings gear (bottom: 6) when both
+                // are visible in outgoing-only mode.
+                bottom: isOutgoingOnly ? 34 : 6,
+                left: 12,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _buildLicenseLink(context),
+                ),
+              ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // BCS Beam local-build addition (2026-08-25): bottom-left sidebar link,
+  // replacing the old centered-at-top "Powered by RustDesk" (loadPowered in
+  // common.dart, still used unmodified on mobile). Opens the new in-app
+  // License Statement settings page instead of an external URL. See
+  // [[bcs-beam-local-build]].
+  Widget _buildLicenseLink(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          if (DesktopSettingPage.tabKeys.contains(SettingsTabKey.license)) {
+            DesktopSettingPage.switch2page(SettingsTabKey.license);
+          }
+        },
+        child: Opacity(
+          opacity: 0.5,
+          child: Text(
+            'License Statement',
+            overflow: TextOverflow.clip,
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(fontSize: 9, decoration: TextDecoration.underline),
+          ),
         ),
       ),
     );

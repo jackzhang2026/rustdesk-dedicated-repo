@@ -234,7 +234,13 @@ jobs:
           # user-visible display name (wizard title, ARP entry, EULA) and CAN
           # have a space — added to preprocess.py so the installer shows
           # "BCS Beam" while the exe stays BCSBeamRemote.exe. Verified locally.
-          python preprocess.py --arp -d ../../bcsbeam-remote --app-name "BCSBeamRemote" --product-name "BCS Beam" --manufacturer "Brocent" 2>&1 | Tee-Object -FilePath preprocess.log
+          # --company-legal-name (2026-08-25): the EULA's copyright/legal-entity
+          # line (upstream "Purslane Ltd" placeholder) used to be replaced with
+          # --product-name too, which read oddly ("...under which BCS Beam.
+          # (hereinafter..."). This is a distinct, fuller legal name for that
+          # one line; --product-name is still used for the EULA's *product*
+          # mentions ("the BCS Beam software application", etc).
+          python preprocess.py --arp -d ../../bcsbeam-remote --app-name "BCSBeamRemote" --product-name "BCS Beam" --manufacturer "Brocent" --company-legal-name "BROCENT CLOUD SERVICE CO., LTD (BCS TEAM)" 2>&1 | Tee-Object -FilePath preprocess.log
           if ($LASTEXITCODE -ne 0) {
             # BCS Beam diagnostic (2026-08-24): PowerShell (the default shell
             # on Windows runners) does NOT fail-fast on a nonzero exit code
