@@ -216,3 +216,29 @@ essential before building).
 
 Unrelated to the macOS branding work (`a4788ab` etc.) that may also be sitting on `main` —
 separate, independent effort, don't block on it either direction.
+
+---
+
+## STATUS UPDATE (2026-08-27 evening, Windows build machine) — VALIDATED, §4 regression check PASSED
+
+Built and validated on Jack's real Windows machine, reporting per §5:
+
+1. **Compiled cleanly first try** — zero errors, no warnings in the touched files.
+   Fallback code paths confirmed present in the built `librustdesk.dll` (grep for the
+   new log strings).
+2. **Direct-to-HK regression check: CLEAN PASS.** Installed v1.3.9.29797178 (zh-CN)
+   over the broken TCP-only build. Positive evidence, not socket inference:
+   - hbbs docker logs on the server show `update_pk 1565553973 ...` within minutes of
+     install — the machine's first successful registration since the TCP-only build
+     landed (zero log entries during the whole broken period).
+   - Service holds a stable UDP rendezvous socket (same ephemeral port across a 12s
+     sample; the broken build churned a new TCP source port every ~4-8s).
+   - No TCP connection to :21116 — UDP worked first try, fallback never needed,
+     no ~30s delay.
+3. **Mainland-relay test: not run**, per §3 — known/expected failure until the
+   server-side hbbs TCP-registration patch lands. Not re-diagnosed.
+4. Acknowledged: this build is a checkpoint, not "done" — mainland relay path remains
+   unusable pending the server-side fix.
+
+Artifacts: `SignOutput/BCSBeamRemote-1.3.9.29797178-udpfallback-x86_64-{en-US,zh-CN}.msi`
+on the Windows build machine; also refreshed into this repo's `dist/` on the ECS box.
