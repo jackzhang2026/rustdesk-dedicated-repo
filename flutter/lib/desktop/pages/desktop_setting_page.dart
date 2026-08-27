@@ -2189,6 +2189,27 @@ class _LicenseStatementState extends State<_LicenseStatement> {
             ),
             SelectionArea(
               child: Text(
+                'Private deployment. BCS Beam runs exclusively on Brocent\'s '
+                'privately operated server infrastructure. Connections are '
+                'established and relayed only through servers deployed and '
+                'managed by Brocent — no public or third-party relay '
+                'services are used, and your session data is never routed '
+                'through infrastructure outside Brocent\'s control.',
+              ).marginSymmetric(vertical: 4.0),
+            ),
+            SelectionArea(
+              child: Text(
+                'Security control. Every remote session requires explicit '
+                'authorization on the client device (connection ID plus '
+                'password or on-screen acceptance), and sessions are '
+                'protected with end-to-end encryption. Brocent operates '
+                'this channel solely for delivering remote support to its '
+                'customers, with customer data security as the governing '
+                'principle.',
+              ).marginSymmetric(vertical: 4.0),
+            ),
+            SelectionArea(
+              child: Text(
                 'BCS Beam is built on the open-source RustDesk project and '
                 'is licensed under the GNU Affero General Public License '
                 'v3.0 (AGPL-3.0). The complete corresponding source code is '

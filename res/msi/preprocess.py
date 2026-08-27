@@ -179,8 +179,17 @@ def gen_pre_vars(args, dist_dir):
         upgrade_code = uuid.uuid5(uuid.NAMESPACE_OID, app_name + ".exe")
 
         indent = g_indent_unit * 1
+        # BCS Beam fix (2026-08-27): first-three-fields version for the Upgrade
+        # table's VersionMin/VersionMax. FindRelatedProducts ignores the 4th
+        # field when comparing anyway, and our 4th field (minutes-since-epoch,
+        # ~29.8M) far exceeds the 65535 ceiling MSI documents for version
+        # fields — keep the detection rows within spec instead of relying on
+        # undefined parsing of an out-of-range value.
+        version3 = ".".join(g_version.split(".")[:3])
+
         to_insert_lines = [
             f'{indent}<?define Version="{g_version}" ?>\n',
+            f'{indent}<?define Version3="{version3}" ?>\n',
             f'{indent}<?define Manufacturer="{args.manufacturer}" ?>\n',
             # BCS Beam local-build fix (2026-08-25): $(var.Product) is used
             # PERVASIVELY as a technical identifier — the actual exe filename

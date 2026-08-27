@@ -37,6 +37,7 @@
 		</InstallUISequence>
 
 		<InstallExecuteSequence>
+			<RemoveExistingProducts After="InstallInitialize" />
 			<InstallExecute After="RemoveExistingProducts" />
 
 			<!--Only do InstallValidate if is not Uninstall-->
@@ -46,7 +47,27 @@
 
 		</InstallExecuteSequence>
 
-		<MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" Schedule="afterInstallInitialize" AllowSameVersionUpgrades="yes" />
+		<!-- BCS Beam fix (2026-08-27): replaced <MajorUpgrade .../> with manual
+		     Upgrade rows. MajorUpgrade stamped this package's own language into
+		     the Upgrade table's Language filter (verified in the built MSI:
+		     Language=2052 in the zh-cn package), so a zh-CN installer could not
+		     detect an installed en-US product and vice versa — cross-language
+		     upgrades silently fell through to a side-by-side dual install
+		     (reproduced on a real machine: en-US 1.3.9.x + zh-CN 1.3.9.y both
+		     registered under the same UpgradeCode). UpgradeVersion without a
+		     Language attribute writes an empty Language column = match ANY
+		     language. Semantics otherwise identical to the old
+		     MajorUpgrade AllowSameVersionUpgrades="yes" +
+		     Schedule="afterInstallInitialize" (IncludeMaximum=yes covers the
+		     same-version case; RemoveExistingProducts scheduled above).
+		     Version3 (first three fields) keeps the rows within MSI's
+		     documented version-field range; comparison ignores the 4th field
+		     anyway. -->
+		<Upgrade Id="$(var.UpgradeCode)">
+			<UpgradeVersion Maximum="$(var.Version3)" IncludeMaximum="yes" MigrateFeatures="yes" Property="WIX_UPGRADE_DETECTED" />
+			<UpgradeVersion Minimum="$(var.Version3)" IncludeMinimum="no" OnlyDetect="yes" Property="WIX_DOWNGRADE_DETECTED" />
+		</Upgrade>
+		<Launch Condition="NOT WIX_DOWNGRADE_DETECTED" Message="!(loc.DowngradeError)" />
 
 		<Feature Id="App" Level="1" AllowAdvertise="no" Display="expand" Title="!(loc.F_App)" Description="!(loc.F_App_Desc)" AllowAbsent="no">
 			<ComponentGroupRef Id="Components" />
