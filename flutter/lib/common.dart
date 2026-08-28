@@ -466,8 +466,15 @@ class MyTheme {
     menuBarTheme: MenuBarThemeData(
         style:
             MenuStyle(backgroundColor: MaterialStatePropertyAll(Colors.white))),
+    // `primary` was stock Material Colors.blue — a THIRD blue, distinct from
+    // both RustDesk's own #0071FF and the brand's #1890FF — while `secondary`
+    // already correctly pointed at `accent`. Any default-Material-styled
+    // widget (unstyled Checkbox/Radio/Switch/etc. with no explicit color)
+    // reads `colorScheme.primary`, not `accent` directly, so leaving this
+    // alone would have left some controls on a third stock blue no matter
+    // what `accent`/`button` were changed to.
     colorScheme: ColorScheme.light(
-        primary: Colors.blue, secondary: accent, background: grayBg),
+        primary: accent, secondary: accent, background: grayBg),
     popupMenuTheme: PopupMenuThemeData(
         color: Colors.white,
         shape: RoundedRectangleBorder(
@@ -574,8 +581,9 @@ class MyTheme {
     menuBarTheme: MenuBarThemeData(
         style: MenuStyle(
             backgroundColor: MaterialStatePropertyAll(Color(0xFF121212)))),
+    // Same fix as the light theme above — `primary` was stock Colors.blue.
     colorScheme: ColorScheme.dark(
-      primary: Colors.blue,
+      primary: accent,
       secondary: accent,
       background: Color(0xFF24252B),
     ),
