@@ -929,7 +929,8 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
         value: gFFI.serverModel,
         child: Consumer<ServerModel>(builder: ((context, model, child) {
           return _Button('Change ID', changeIdDialog,
-              enabled: !locked && model.connectStatus > 0);
+              enabled: !locked && model.connectStatus > 0,
+              style: _dangerButtonStyle);
         })));
   }
 
@@ -1283,7 +1284,7 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
                     offstage: !hasWhitelist.value,
                     child: MouseRegion(
                       child: const Icon(Icons.warning_amber_rounded,
-                              color: Color.fromARGB(255, 255, 204, 0))
+                              color: MyTheme.warningColor)
                           .marginOnly(right: 5),
                       cursor: SystemMouseCursors.click,
                     ),
@@ -2119,7 +2120,8 @@ class _AboutState extends State<_About> {
                     style: linkStyle,
                   ).marginSymmetric(vertical: 4.0)),
               Container(
-                decoration: const BoxDecoration(color: Color(0xFF2c8cff)),
+                decoration:
+                    const BoxDecoration(gradient: MyTheme.brandGradient),
                 padding:
                     const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
                 child: SelectionArea(
@@ -2253,7 +2255,8 @@ class _LicenseStatementState extends State<_LicenseStatement> {
                   style: linkStyle,
                 ).marginSymmetric(vertical: 4.0)),
             Container(
-              decoration: const BoxDecoration(color: Color(0xFF2c8cff)),
+              decoration:
+                  const BoxDecoration(gradient: MyTheme.brandGradient),
               padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
               child: SelectionArea(
                 child: Text(
@@ -2472,13 +2475,24 @@ class _WaylandCardState extends State<WaylandCard> {
       'Clear Wayland screen selection',
       showConfirmMsgBox,
       tip: 'clear_Wayland_screen_selection_tip',
-      style: ButtonStyle(
-        backgroundColor: MaterialStateProperty.all<Color>(
-            Theme.of(context).colorScheme.error.withOpacity(0.75)),
-      ),
+      style: _dangerButtonStyle,
     );
   }
 }
+
+// Shared destructive-action button style — was a one-off inline
+// `Theme.of(context).colorScheme.error.withOpacity(0.75)` used only on the
+// Wayland "Clear screen selection" button, while other risky actions (e.g.
+// "Change ID") used the same plain style as every harmless button. Pulled
+// out so every genuinely destructive/risky settings action reads the same
+// way instead of inventing its own one-off treatment.
+final ButtonStyle _dangerButtonStyle = ButtonStyle(
+  backgroundColor: MaterialStateProperty.all<Color>(Colors.transparent),
+  foregroundColor: MaterialStateProperty.all<Color>(const Color(0xFFE5484D)),
+  side: MaterialStateProperty.all<BorderSide>(
+      const BorderSide(color: Color(0xFFE5484D))),
+  elevation: MaterialStateProperty.all<double>(0),
+);
 
 // ignore: non_constant_identifier_names
 Widget _Button(String label, Function() onPressed,

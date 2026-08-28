@@ -231,7 +231,12 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     final model = gFFI.serverModel;
     return Container(
       margin: const EdgeInsets.only(left: 20, right: 11),
-      height: 57,
+      // Was 57 — bumped 6px to fit the bolder ID value below without
+      // clipping. Own ID/password being easy to miss is RustDesk's own
+      // users' most-repeated complaint about this exact screen (upstream
+      // discussion #7097) — weight, not just size, is what actually reads
+      // as "important" at a glance.
+      height: 63,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
@@ -281,7 +286,8 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                           contentPadding: EdgeInsets.only(top: 10, bottom: 10),
                         ),
                         style: TextStyle(
-                          fontSize: 22,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
                         ),
                       ).workaroundFreezeLinuxMint(),
                     ),
@@ -378,7 +384,12 @@ class _DesktopHomePageState extends State<DesktopHomePage>
                               contentPadding:
                                   EdgeInsets.only(top: 14, bottom: 10),
                             ),
-                            style: TextStyle(fontSize: 15),
+                            // Was 15 — the ID field above it is 24/bold;
+                            // matched so ID and password read as equally
+                            // important instead of the password looking
+                            // like a secondary afterthought.
+                            style: TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.w700),
                           ).workaroundFreezeLinuxMint(),
                         ),
                       ),

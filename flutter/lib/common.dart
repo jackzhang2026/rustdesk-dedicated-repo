@@ -238,17 +238,43 @@ class MyTheme {
   MyTheme._();
 
   static const Color grayBg = Color(0xFFEFEFF2);
-  static const Color accent = Color(0xFF0071FF);
-  static const Color accent50 = Color(0x770071FF);
-  static const Color accent80 = Color(0xAA0071FF);
+  // BCS Beam brand blue (branding/README.md's approved palette — same value
+  // already baked into the sidebar wordmark/icon PNGs). Was RustDesk's own
+  // stock #0071FF; `button` below used a second, slightly different stock
+  // blue (#2C8CFF) for the same "interactive accent" role — unified to one
+  // value so buttons/focus rings/accents no longer disagree with each other
+  // or with the brand.
+  static const Color accent = Color(0xFF1890FF);
+  static const Color accent50 = Color(0x771890FF);
+  static const Color accent80 = Color(0xAA1890FF);
   static const Color canvasColor = Color(0xFF212121);
   static const Color border = Color(0xFFCCCCCC);
   static const Color idColor = Color(0xFF00B6F0);
   static const Color darkGray = Color.fromARGB(255, 148, 148, 148);
   static const Color cmIdColor = Color(0xFF21790B);
   static const Color dark = Colors.black87;
-  static const Color button = Color(0xFF2C8CFF);
+  static const Color button = Color(0xFF1890FF);
   static const Color hoverBorder = Color(0xFF999999);
+  // Icon-badge gradient (branding/README.md: #1976e8 top -> #0d3b6e bottom) —
+  // reused wherever a solid brand-blue fill previously stood in for the
+  // brand's actual icon gradient (copyright banners, help-card accents).
+  static const Color brandGradientTop = Color(0xFF1976E8);
+  static const Color brandGradientBottom = Color(0xFF0D3B6E);
+  static const LinearGradient brandGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [brandGradientTop, brandGradientBottom],
+  );
+  // Chat bubble color for the OTHER party's messages (own messages use
+  // `accent` above). Was Colors.blueGrey — hardcoded, not theme-aware, and
+  // not part of any brand token. Navy-tinted instead of Material's generic
+  // blue-grey so it reads as "not you" without fighting the brand blue.
+  static const Color chatBubbleOther = Color(0xFF57647C);
+  // Semantic warning color for inline warning notes (e.g. IP whitelist).
+  // Was a one-off `Color.fromARGB(255, 255, 204, 0)` inline in the Safety
+  // tab — pulled out to a real token so any future warning note matches it
+  // instead of re-inventing its own shade of amber.
+  static const Color warningColor = Color(0xFFF5A623);
 
   // ListTile
   static const ListTileThemeData listTileTheme = ListTileThemeData(
