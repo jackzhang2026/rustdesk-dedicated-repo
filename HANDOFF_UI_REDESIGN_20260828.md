@@ -163,3 +163,47 @@ these changes will ever see.** If something doesn't compile, it's most likely on
   bump, ID board height adjusted to fit.
 
 No files under `src/` (Rust) were touched — this is a pure Flutter/Dart change.
+
+---
+
+## 7. STATUS UPDATE (2026-08-29, Windows build session) — BUILT & VALIDATED
+
+Executed per §0 on the Windows build machine. Results:
+
+**Build (§3): clean.** `flutter analyze` on the 4 touched files: **0 errors, 0
+warnings** — 26 info-level hits, all pre-existing codebase-wide deprecations
+(`MaterialStateProperty`, `ColorScheme.background`, `RawKeyDownEvent`); the feared
+`MaterialStateProperty`→`WidgetStateProperty` rename is deprecation-info only on this
+SDK, compiles fine, nothing had to be fixed. Full pipeline (build.py → assemble →
+preprocess → msbuild) passed in ~6 min (Rust layer fully incremental — no Rust
+changes, so `librustdesk.dll` and the About page's "Build date" still read
+2026-08-27; the Dart AOT snapshot `app.so` is fresh from this build, confirmed
+deployed via install-dir timestamp).
+
+**Artifacts:** `BCSBeamRemote-1.3.9.29799544-uiredesign-x86_64-{en-US,zh-CN}.msi`
+(SHA-256 65930DE6… / EB43FE40…). Installed on Jack's machine (upgrade over
+29797178): single ARP entry, service running, **network regression passed** — home
+screen shows Ready, and hbbs logged `update_pk 1565553973` at the exact second the
+new service started.
+
+**Visual checklist (§4), from Jack's screenshots (6: home/Security/License/About
+light + General/home dark):**
+
+- ✅ Home (light + dark): ID accent bar + ID value brand blue; ID `1 565 553 973`
+  and one-time password `gwd2ng` visibly larger/bolder, **no overflow or clipping**;
+  dark-mode logo variant correct.
+- ✅ Dark mode overall: no color anomalies on General/home — the `cbc4756`
+  `ColorScheme.primary` fix (the least-verified change) did NOT break dark mode;
+  accent blue renders correctly on radios/checkboxes/buttons.
+- ✅ About + License: copyright banner renders correctly, white text legible. The
+  gradient is subtle at screenshot size — no visual defect either way.
+- ⬜ **Not yet verified** (security settings were locked in the screenshot /
+  requires a live session): "Change ID" danger-outline style, IP-whitelist amber
+  warning icon, chat bubble colors, in-session toolbar inheritance. No reason to
+  expect failure — same token mechanism as the verified items — but §4 marks these
+  open until someone unlocks security settings / runs a session.
+- n/a Wayland card (Linux only).
+
+**Verdict: phase-1 color/token layer is live and validated on real hardware.**
+§2's three deferred items (Display-tab regrouping, device-list rework,
+customer/engineer packaging split) remain open follow-ups, per §5.4.
